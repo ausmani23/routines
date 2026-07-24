@@ -89,6 +89,33 @@ function scheduleAhead(i, firstEndsAt){
   toneAt(t-3,880,.07,.16); toneAt(t-2,880,.07,.16); toneAt(t-1,880,.07,.16);
   toneAt(t,760,.14,.25); toneAt(t+.15,1010,.22,.25);
 }
+/* iOS mutes Web Audio when the ringer switch is on silent. Looping a silent
+   HTML5 <audio> track during a run promotes the audio session to "media
+   playback" (like a music app), which the mute switch doesn't silence.
+   Runs only while a routine is active; started from the Start-tap gesture. */
+let silentEl=null;
+function silentWavURL(){ // 0.5 s of silence, 8 kHz mono 16-bit, built in memory
+  const rate=8000, n=rate/2, buf=new ArrayBuffer(44+n*2), v=new DataView(buf);
+  const w=(o,s)=>{ for(let i=0;i<s.length;i++) v.setUint8(o+i,s.charCodeAt(i)); };
+  w(0,"RIFF"); v.setUint32(4,36+n*2,true); w(8,"WAVEfmt ");
+  v.setUint32(16,16,true); v.setUint16(20,1,true); v.setUint16(22,1,true);
+  v.setUint32(24,rate,true); v.setUint32(28,rate*2,true);
+  v.setUint16(32,2,true); v.setUint16(34,16,true);
+  w(36,"data"); v.setUint32(40,n*2,true);
+  return URL.createObjectURL(new Blob([buf],{type:"audio/wav"}));
+}
+function mediaSession(on){
+  try{
+    if(on){
+      if(!silentEl){ silentEl=new Audio(silentWavURL()); silentEl.loop=true; }
+      silentEl.play().catch(()=>{});
+    }else if(silentEl){
+      // grace period so the end-of-routine chime isn't re-muted mid-play
+      setTimeout(()=>{ if(!state.running && silentEl) silentEl.pause(); }, 2500);
+    }
+  }catch(e){}
+}
+
 function say(t){ if(!voice||!window.speechSynthesis) return;
   try{ speechSynthesis.cancel(); const u=new SpeechSynthesisUtterance(t); u.rate=1.02; speechSynthesis.speak(u);}catch(e){} }
 function unlockAudio(){ try{ ctx(); if(window.speechSynthesis) speechSynthesis.speak(new SpeechSynthesisUtterance("")); }catch(e){} }
@@ -133,7 +160,7 @@ document.addEventListener("visibilitychange",()=>{
 function go(id){
   document.querySelectorAll(".screen").forEach(s=>s.classList.toggle("on", s.id===id));
   window.scrollTo(0,0);
-  if(id!=="run"){ stopTick(); keepAwake(false); clearScheduled(); state.running=false; }
+  if(id!=="run"){ stopTick(); keepAwake(false); clearScheduled(); mediaSession(false); state.running=false; }
 }
 document.addEventListener("click", e=>{ const b=e.target.closest("[data-go]"); if(b) go(b.dataset.go); });
 
@@ -221,7 +248,7 @@ function buildSeq(){
 }
 
 function startRoutine(){
-  unlockAudio();
+  unlockAudio(); mediaSession(true);
   state.seq=buildSeq(); state.i=0;
   state.total=routineSeconds(state.routine);
   renderBeads(); loadStep(0);

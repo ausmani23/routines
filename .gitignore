@@ -1,0 +1,7 @@
+# Original PDF routine cards — personal source material, not part of the app
+*.pdf
+
+# The pre-split single-file prototype, kept locally as a backup
+routines.html
+
+claude_workspace/

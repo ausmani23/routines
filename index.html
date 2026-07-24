@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#0F1922">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Routines">
+<title>Routines</title>
+<link rel="manifest" href="manifest.json">
+<link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
+<link rel="icon" type="image/png" sizes="192x192" href="icons/icon-192.png">
+<link rel="stylesheet" href="styles.css">
+</head>
+<body>
+
+<section id="home" class="screen on"><div class="wrap">
+  <div class="masthead"><h1>Routines</h1><span id="clockNow"></span></div>
+  <div id="cards"></div>
+  <div class="toggles">
+    <button class="tg" id="tgSound" aria-pressed="true">Beeps on</button>
+    <button class="tg" id="tgVoice" aria-pressed="true">Voice on</button>
+  </div>
+  <p class="hint" id="hint">Timed moves count down and advance on their own. Rep-based moves wait
+  for you — tap the dial when you finish the set.</p>
+  <p class="hint" id="awakeStatus" style="border:0;padding-top:6px;margin-top:0"></p>
+</div></section>
+
+<section id="detail" class="screen"><div class="wrap">
+  <button class="back" data-go="home">← All routines</button>
+  <h2 class="detail-h" id="dName"></h2>
+  <p class="detail-sub" id="dSub"></p>
+  <div id="dLevels"></div>
+  <div id="dSteps"></div>
+  <div class="start"><button id="btnStart">Start routine</button></div>
+</div></section>
+
+<section id="run" class="screen"><div class="wrap">
+  <div class="beads" id="beads"></div>
+  <div class="stage">
+    <div class="phase" id="phase"></div>
+    <div class="ringwrap" id="ringwrap">
+      <svg width="236" height="236" viewBox="0 0 236 236" aria-hidden="true">
+        <circle class="ring-bg" cx="118" cy="118" r="110"></circle>
+        <circle class="ring-fg" id="ring" cx="118" cy="118" r="110"></circle>
+      </svg>
+      <div class="clock">
+        <div class="t" id="tRemain">0</div>
+        <div class="side" id="tSide"></div>
+        <div class="elapsed" id="tElapsed"></div>
+      </div>
+    </div>
+    <h2 class="exname" id="rName"></h2>
+    <p class="exlvl" id="rLvl"></p>
+    <p class="excue" id="rCue"></p>
+  </div>
+  <div class="next" id="rNext"></div>
+  <div class="controls">
+    <button class="ctl" id="btnPrev">Back</button>
+    <button class="ctl main" id="btnPause">Pause</button>
+    <button class="ctl" id="btnNext">Skip</button>
+  </div>
+  <div class="quit"><button data-go="home" id="btnQuit">End routine</button></div>
+  <video id="nosleep" muted playsinline loop preload="auto"
+    style="position:fixed;width:2px;height:2px;opacity:.01;pointer-events:none;bottom:0;left:0"></video>
+</div></section>
+
+<section id="done" class="screen"><div class="wrap"><div class="done">
+  <div class="tick">✓</div>
+  <h2 id="doneName">Done</h2>
+  <p id="doneSub"></p>
+  <p class="streakline" id="doneStreak"></p>
+  <button class="again" id="btnAgain">Run again</button>
+  <button class="again" data-go="home">All routines</button>
+</div></div></section>
+
+<script src="routines.js"></script>
+<script src="app.js"></script>
+</body>
+</html>

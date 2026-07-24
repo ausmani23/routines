@@ -1,0 +1,52 @@
+# CLAUDE.md
+
+This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
+
+## What this is
+
+A personal exercise-routine timer PWA (plain HTML/CSS/JS, no framework, no build
+step, no dependencies), deployed to GitHub Pages at
+https://ausmani23.github.io/routines/. `PROJECT.md` is the full handoff document —
+read it for background and open decisions.
+
+## Commands
+
+There is no build, lint, or test step. Development is: edit files, open
+`index.html` (or push and check the live URL).
+
+- **Deploy**: `git push` — GitHub Pages serves the repo root from `main`.
+- **When any app file changes, bump `CACHE` in `sw.js`** (`routines-v1` →
+  `routines-v2`, …). Installed clients only pick up new versions when the cache
+  name changes.
+- Local smoke test (wake lock and service worker need https or localhost, so a
+  `file://` open is partial): headless render check —
+  `chrome --headless=new --dump-dom file:///path/to/index.html`
+
+## Architecture
+
+- `routines.js` — the `ROUTINES` data array; the only file that changes for
+  content edits. Schema documented in its header comment. New routines are
+  appended objects; the engine needs no changes.
+- `app.js` — the engine: audio (`toneAt`/`scheduleAhead`/`say`), screen-wake
+  (`keepAwake`), navigation (`go`), rendering (`renderHome`/`renderDetail`),
+  sequence builder (`buildSeq` flattens blocks × sides × sets into `state.seq`),
+  run loop (`loadStep`/`advance`/`resync`), and localStorage persistence (`db`:
+  sound/voice prefs, per-routine level, completion log used for streak display).
+- `index.html` — four `<section class="screen">` blocks toggled by an `.on`
+  class; no router.
+- `sw.js` — cache-first service worker with background refresh.
+- Screen state lives in one mutable `state` object; persistent state in one
+  localStorage key `routines.v1`.
+
+## Load-bearing invariants (do not refactor away)
+
+- **Wall-clock timing**: segment position is always derived from `Date.now()`
+  vs `state.endsAt` in `resync()` — never a per-tick decrement. This is what
+  makes backgrounding/lock not drift.
+- **Audio scheduled ahead**: cues for a run of timed segments are queued on the
+  AudioContext clock (`scheduleAhead`) so they fire even when JS is throttled.
+- **Audio unlock**: all sound must stay behind the first-tap `unlockAudio()`;
+  iOS produces no audio otherwise.
+- **Content is rehab guidance transcribed from the owner's real cards** —
+  exercise text, doses, and cues (e.g. "skip on a RED morning") are
+  authoritative. Never paraphrase or "improve" them without asking.

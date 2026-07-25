@@ -10,15 +10,19 @@
    ============================================================ */
 const $ = s => document.querySelector(s);
 const PREP = 5;
-let state = { routine:null, level:0, seq:[], i:0, left:0, up:0, total:0, running:false,
+let state = { routine:null, variant:0, moves:0, seq:[], i:0, left:0, up:0, total:0, running:false,
   tick:null, wake:null, endsAt:null, startedAt:0 };
 
 /* ---------- persistence ----------
-   One localStorage key. levels: last-chosen level per routine.
+   One localStorage key.
+   exLevels: per-routine, per-exercise level (keyed by block name, so repeated
+             blocks like "Dead bug — 2nd round" share one level).
+   levels:   legacy routine-wide level — kept only as a migration fallback.
+   variantSel/variantDone: chosen and last-completed variant per routine.
    log: completion timestamps (epoch ms) per routine id. */
 const DB_KEY = "routines.v1";
 function loadDB(){
-  const def = { sound:true, voice:true, levels:{}, log:{} };
+  const def = { sound:true, voice:true, levels:{}, exLevels:{}, variantSel:{}, variantDone:{}, log:{} };
   try{ return Object.assign(def, JSON.parse(localStorage.getItem(DB_KEY)||"{}")); }
   catch(e){ return def; }
 }
@@ -166,11 +170,40 @@ document.addEventListener("click", e=>{ const b=e.target.closest("[data-go]"); i
 
 function mmss(t){ const m=Math.floor(t/60), s=t%60; return `${m}:${String(s).padStart(2,"0")}`; }
 function fmtMin(t){ return `${Math.round(t/60)} min`; }
-function routineSeconds(r){
-  return r.blocks.reduce((a,b)=>{
-    const n=(b.sides||1)*(b.sets||1);
-    return a + (b.mode==="reps" ? (b.est||60)*n : b.sec*n);
-  },0);
+
+/* ---------- per-exercise levels & routine variants ---------- */
+function exLevel(r,b){
+  if(!b.levels) return 0;
+  const ex = db.exLevels[r.id]||{};
+  let v = ex[b.name];
+  if(v==null) v = db.levels[r.id];          // migrate old routine-wide level
+  if(v==null) v = r.defaultLevel||0;
+  return Math.min(Math.max(v,0), b.levels.length-1);
+}
+function setExLevel(r,b,v){ (db.exLevels[r.id] = db.exLevels[r.id]||{})[b.name]=v; saveDB(); }
+function activeBlocks(r,v){ return r.blocks.filter(b=>b.variant==null || b.variant===v); }
+function defaultVariant(r){
+  if(!r.variants) return 0;
+  if(r.variantMode==="alternate"){
+    const last = db.variantDone[r.id];
+    return last==null ? 0 : (last+1)%r.variants.length;
+  }
+  const sel = db.variantSel[r.id];
+  return (sel!=null && sel<r.variants.length) ? sel : 0;
+}
+function blockSeconds(b){
+  const n=(b.sides||1)*(b.sets||1);
+  return (b.mode==="reps" ? (b.est||60)*n : b.sec*n);
+}
+/* Optional blocks are reported separately so the headline time reflects the
+   work that actually has to happen — the 10-min-per-session budget. */
+function routineSeconds(r, v){
+  return activeBlocks(r, v==null?defaultVariant(r):v)
+    .filter(b=>b.badge!=="opt").reduce((a,b)=>a+blockSeconds(b),0);
+}
+function optionalSeconds(r, v){
+  return activeBlocks(r, v==null?defaultVariant(r):v)
+    .filter(b=>b.badge==="opt").reduce((a,b)=>a+blockSeconds(b),0);
 }
 function badgeHTML(b){
   if(!b.badge) return "";
@@ -184,14 +217,16 @@ function didHTML(id){
     (st.streak>1?` · <span class="streak">${st.streak}-day streak</span>`:"") + `</div>`;
 }
 function renderHome(){
-  $("#cards").innerHTML = ROUTINES.map(r=>`
+  $("#cards").innerHTML = ROUTINES.map(r=>{
+    const v = defaultVariant(r);
+    return `
     <button class="card" data-r="${r.id}" style="--accent:${r.accent}">
       <h2>${r.name}</h2><div class="sub">${r.sub}</div>
-      <div class="meta"><span><b>${fmtMin(routineSeconds(r))}</b></span>
-      <span><b>${r.blocks.length}</b> moves</span>
-      ${r.levelNames?`<span><b>${r.levelNames.length}</b> levels</span>`:""}</div>
+      <div class="meta"><span><b>${fmtMin(routineSeconds(r,v))}</b>${optionalSeconds(r,v)?` +${fmtMin(optionalSeconds(r,v))} opt`:""}</span>
+      <span><b>${activeBlocks(r,v).length}</b> moves</span>
+      ${r.variants?`<span><b>${r.variants[v]}</b>${r.variantMode==="alternate"?" next":""}</span>`:""}</div>
       ${didHTML(r.id)}
-    </button>`).join("");
+    </button>`;}).join("");
   $("#cards").querySelectorAll("[data-r]").forEach(el=>{ el.onclick=()=>openDetail(el.dataset.r); });
 }
 function nowStr(){ $("#clockNow").textContent = new Date().toLocaleTimeString([],{hour:"numeric",minute:"2-digit"}); }
@@ -199,8 +234,7 @@ function nowStr(){ $("#clockNow").textContent = new Date().toLocaleTimeString([]
 function openDetail(id){
   const r = ROUTINES.find(x=>x.id===id);
   state.routine=r;
-  const saved = db.levels[r.id];
-  state.level = (saved!=null && r.levelNames && saved<r.levelNames.length) ? saved : (r.defaultLevel||0);
+  state.variant=defaultVariant(r);
   renderDetail(); go("detail");
 }
 function renderDetail(){
@@ -208,30 +242,43 @@ function renderDetail(){
   $("#dName").textContent=r.name; $("#dSub").textContent=r.sub;
   document.documentElement.style.setProperty("--signal", r.accent);
 
-  if(r.levelNames){
-    $("#dLevels").innerHTML = `<div class="levels">` + r.levelNames.map((n,i)=>
-      `<button class="lvl" data-l="${i}" aria-pressed="${i===state.level}"><b>${n}</b><s>${r.levelTags[i]||"&nbsp;"}</s></button>`).join("") + `</div>`;
-    $("#dLevels").querySelectorAll("[data-l]").forEach(el=>{ el.onclick=()=>{
-      state.level=+el.dataset.l; db.levels[r.id]=state.level; saveDB(); renderDetail(); }; });
+  if(r.variants){
+    $("#dLevels").innerHTML = `<div class="levels">` + r.variants.map((n,i)=>
+      `<button class="lvl" data-v="${i}" aria-pressed="${i===state.variant}"><b>${n}</b><s>${(r.variantTags&&r.variantTags[i])||"&nbsp;"}</s></button>`).join("") + `</div>`;
+    $("#dLevels").querySelectorAll("[data-v]").forEach(el=>{ el.onclick=()=>{
+      state.variant=+el.dataset.v;
+      if(r.variantMode!=="alternate"){ db.variantSel[r.id]=state.variant; saveDB(); }
+      renderDetail(); }; });
   } else $("#dLevels").innerHTML = `<p class="label">The circuit</p>`;
 
-  $("#dSteps").innerHTML = r.blocks.map((b,i)=>{
+  const blocks=activeBlocks(r,state.variant);
+  $("#dSteps").innerHTML = blocks.map((b,i)=>{
     const dose = b.dose || (b.sides? `${b.sec}s × ${b.sides}` : `${b.sec}s`);
-    const line = b.levels? b.levels[state.level] : (b.detail||"");
+    const lvl = exLevel(r,b);
+    const line = b.levels? b.levels[lvl] : (b.detail||"");
+    const chips = b.levels? `<div class="exlvls">`+b.levels.map((_,li)=>
+      `<button class="exl" data-ex="${i}" data-l="${li}" aria-pressed="${li===lvl}">L${li+1}</button>`).join("")+`</div>` : "";
     return (b.group?`<p class="group">${b.group}</p>`:"") +
       `<div class="step"><div class="n">${i+1}</div><div class="body">
         <div class="nm">${b.name}${b.tag?` <span style="color:var(--dimmer);font-weight:400">· ${b.tag}</span>`:""}${badgeHTML(b)}</div>
         <div class="dose">${dose}${b.mode==="reps"?" · tap to advance":""}</div>
         <div class="lv">${line}</div>
-        ${b.cue?`<div class="cue">${b.cue}</div>`:""}</div></div>`;
+        ${b.cue?`<div class="cue">${b.cue}</div>`:""}
+        ${chips}</div></div>`;
   }).join("");
+  $("#dSteps").querySelectorAll(".exl").forEach(el=>{ el.onclick=()=>{
+    setExLevel(r, blocks[+el.dataset.ex], +el.dataset.l); renderDetail(); }; });
+  const opt=optionalSeconds(r,state.variant);
+  $("#btnStart").textContent = `Start routine · ${fmtMin(routineSeconds(r,state.variant))}` +
+    (opt?` +${fmtMin(opt)} opt`:"");
 }
 
 function buildSeq(){
-  const r=state.routine, seq=[];
-  seq.push({type:"prep", mode:"time", sec:PREP, name:"Get set", label:r.blocks[0].name});
-  r.blocks.forEach((b,bi)=>{
-    const line = b.levels? b.levels[state.level] : (b.detail||"");
+  const r=state.routine, seq=[], blocks=activeBlocks(r,state.variant);
+  state.moves=blocks.length;
+  seq.push({type:"prep", mode:"time", sec:PREP, name:"Get set", label:blocks[0].name});
+  blocks.forEach((b,bi)=>{
+    const line = b.levels? b.levels[exLevel(r,b)] : (b.detail||"");
     const sides=b.sides||1, sets=b.sets||1;
     for(let st=0; st<sets; st++){
       for(let s=0; s<sides; s++){
@@ -250,7 +297,7 @@ function buildSeq(){
 function startRoutine(){
   unlockAudio(); mediaSession(true);
   state.seq=buildSeq(); state.i=0;
-  state.total=routineSeconds(state.routine);
+  state.total=routineSeconds(state.routine, state.variant);
   renderBeads(); loadStep(0);
   state.running=true; keepAwake(true); go("run"); startTick();
 }
@@ -293,7 +340,7 @@ function loadStep(i, opts){
   $("#tElapsed").textContent = reps ? "tap when done" : (s.set||"");
 
   $("#phase").textContent = s.type==="prep" ? "Starting"
-      : `Move ${s.block+1} of ${state.routine.blocks.length}${s.set?" · "+s.set:""}${s.tag?" · "+s.tag:""}`;
+      : `Move ${s.block+1} of ${state.moves}${s.set?" · "+s.set:""}${s.tag?" · "+s.tag:""}`;
   $("#rName").textContent = s.type==="prep" ? "Get set" : s.name;
   $("#rLvl").textContent  = s.type==="prep" ? `Up next: ${s.label}` : (s.detail||"");
   $("#rCue").textContent  = s.type==="prep" ? "" : (s.cue||"");
@@ -347,12 +394,19 @@ function stopTick(){ if(state.tick){ clearInterval(state.tick); state.tick=null;
 function finish(){
   stopTick(); state.running=false; keepAwake(false); clearScheduled();
   ping(760,.14,.25); setTimeout(()=>ping(1010,.22,.25),150); say("Done.");
-  const id=state.routine.id;
+  const r=state.routine, id=r.id;
   (db.log[id] = db.log[id]||[]).push(Date.now());
+  if(r.variants) db.variantDone[id]=state.variant;
   saveDB();
   const st=stats(id);
-  $("#doneName").textContent = state.routine.name;
-  $("#doneSub").textContent = `${state.routine.blocks.length} moves complete.`;
+  $("#doneName").textContent = r.name;
+  let sub = `${state.moves} moves complete.`;
+  if(r.variants){
+    sub = `${r.variants[state.variant]} — ${sub}`;
+    if(r.variantMode==="alternate")
+      sub += ` Next time: ${r.variants[(state.variant+1)%r.variants.length]}.`;
+  }
+  $("#doneSub").textContent = sub;
   $("#doneStreak").textContent = st.streak>1 ? `${st.streak}-day streak.` : "Logged for today.";
   renderHome();
   go("done");

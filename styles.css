@@ -60,6 +60,10 @@ button{font:inherit;color:inherit;background:none;border:none;cursor:pointer}
 .step .cue{color:var(--dimmer);font-size:12.5px;font-style:italic;margin-top:3px;line-height:1.5}
 .badge{display:inline-block;margin-left:6px;font-size:9.5px;letter-spacing:.11em;text-transform:uppercase;
   border-radius:4px;padding:2px 5px;vertical-align:2px;font-weight:600}
+.exlvls{display:flex;gap:6px;margin-top:8px}
+.exl{border:1px solid var(--line);border-radius:7px;padding:3px 11px;font-size:11px;
+  font-weight:650;color:var(--dimmer);background:var(--panel);letter-spacing:.04em}
+.exl[aria-pressed="true"]{background:var(--signal);color:#08131A;border-color:var(--signal)}
 .badge.req{background:var(--bone);color:#0F1922}
 .badge.new{background:#2F7D5C;color:#EDE8DF}
 .badge.opt{border:1px solid var(--dimmer);color:var(--dimmer)}

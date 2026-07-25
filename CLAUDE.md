@@ -31,7 +31,31 @@ There is no build, lint, or test step. Development is: edit files, open
   (`keepAwake`), navigation (`go`), rendering (`renderHome`/`renderDetail`),
   sequence builder (`buildSeq` flattens blocks × sides × sets into `state.seq`),
   run loop (`loadStep`/`advance`/`resync`), and localStorage persistence (`db`:
-  sound/voice prefs, per-routine level, completion log used for streak display).
+  sound/voice prefs, per-exercise levels, variant state, completion log).
+
+### Progression is per exercise, not per routine
+
+`db.exLevels[routineId][blockName]` holds one level per exercise, keyed by
+block **name** — so repeated blocks (`Dead bug` / `Dead bug · 2nd round`) share
+a level, which is what the card prescribes ("level up one exercise at a time,
+never the whole circuit"). `exLevel()` falls back to the legacy routine-wide
+`db.levels[id]` so existing installs migrate silently. Don't reintroduce a
+routine-wide level selector.
+
+### A/B routines
+
+A routine with `variants:[...]` filters its blocks through `activeBlocks()`:
+a block with no `variant` field runs in **every** variant (that is how daily
+non-negotiables carry across A and B days); `variant:n` restricts it to one.
+`variantMode:"alternate"` makes the app default to whichever variant was *not*
+completed last (`db.variantDone`), so A/B rotates on its own.
+
+### Session budget
+
+Sessions target ≤10 min. `routineSeconds()` counts only required blocks;
+`optionalSeconds()` counts `badge:"opt"` ones, shown separately as "+N min opt".
+When adding content, check the totals — `claude_workspace/` has the
+duration-check harness.
 - `index.html` — four `<section class="screen">` blocks toggled by an `.on`
   class; no router.
 - `sw.js` — cache-first service worker with background refresh.

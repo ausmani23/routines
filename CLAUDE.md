@@ -17,10 +17,19 @@ There is no build, lint, or test step. Development is: edit files, open
 - **Deploy**: `git push` — GitHub Pages serves the repo root from `main`.
 - **When any app file changes, bump `CACHE` in `sw.js`** (`routines-v1` →
   `routines-v2`, …). Installed clients only pick up new versions when the cache
-  name changes.
-- Local smoke test (wake lock and service worker need https or localhost, so a
-  `file://` open is partial): headless render check —
-  `chrome --headless=new --dump-dom file:///path/to/index.html`
+  name changes. The app then reloads itself once the new worker takes control
+  (`controllerchange` in app.js) — but that reload is deliberately suppressed
+  while a routine is running, so a deploy mid-workout applies on return to home.
+- **If a change appears not to have shipped, suspect the cache before the code.**
+  Verify what is actually being served (`curl -s <url>/app.js | grep …`) rather
+  than re-pushing. A cache-first worker will happily serve a stale page from a
+  correct deploy.
+- Test harnesses live in `claude_workspace/tests/` (engine assertions, routine
+  durations + data integrity, responsive layout) — see the README there.
+- **Never use `--screenshot` at a narrow `--window-size` to check mobile
+  layout.** Headless Chrome lays out at a fixed ~500px regardless, so the image
+  is a crop of a wider render and looks exactly like a clipping bug. Render
+  through a fixed-width iframe instead.
 
 ## Architecture
 

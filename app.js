@@ -217,17 +217,27 @@ function didHTML(id){
   return `<div class="did">Last done <b>${fmtLast(st.lastDay)}</b> · <b>${st.count}×</b> total` +
     (st.streak>1?` · <span class="streak">${st.streak}-day streak</span>`:"") + `</div>`;
 }
-function renderHome(){
-  $("#cards").innerHTML = ROUTINES.map(r=>{
-    const v = defaultVariant(r);
-    return `
+function cardHTML(r){
+  const v = defaultVariant(r), time = fmtMin(routineSeconds(r,v));
+  /* Skip the variant chip when the variant is just named for its length
+     (core's "5 min"), so the card doesn't read "5 min · 5 min". */
+  const showVariant = r.variants && r.variants[v] !== time;
+  return `
     <button class="card" data-r="${r.id}" style="--accent:${r.accent}">
       <h2>${r.name}</h2><div class="sub">${r.sub}</div>
-      <div class="meta"><span><b>${fmtMin(routineSeconds(r,v))}</b>${optionalSeconds(r,v)?` +${fmtMin(optionalSeconds(r,v))} opt`:""}</span>
-      <span><b>${activeBlocks(r,v).length}</b> moves</span>
-      ${r.variants?`<span><b>${r.variants[v]}</b>${r.variantMode==="alternate"?" next":""}</span>`:""}</div>
+      <div class="meta"><span><b>${time}</b>${optionalSeconds(r,v)?` +${fmtMin(optionalSeconds(r,v))} opt`:""}</span>
+      <span class="moves"><b>${activeBlocks(r,v).length}</b> moves</span>
+      ${showVariant?`<span><b>${r.variants[v]}</b>${r.variantMode==="alternate"?" next":""}</span>`:""}</div>
       ${didHTML(r.id)}
-    </button>`;}).join("");
+    </button>`;
+}
+function renderHome(){
+  const daily = ROUTINES.filter(r=>!r.onDemand), demand = ROUTINES.filter(r=>r.onDemand);
+  $("#cards").innerHTML = !demand.length ? daily.map(cardHTML).join("") : `
+    <div class="cols">
+      <div><p class="col-h">Daily <s>5× a week is a win</s></p>${daily.map(cardHTML).join("")}</div>
+      <div><p class="col-h">On demand <s>when it's called for</s></p>${demand.map(cardHTML).join("")}</div>
+    </div>`;
   $("#cards").querySelectorAll("[data-r]").forEach(el=>{ el.onclick=()=>openDetail(el.dataset.r); });
 }
 function nowStr(){ $("#clockNow").textContent = new Date().toLocaleTimeString([],{hour:"numeric",minute:"2-digit"}); }

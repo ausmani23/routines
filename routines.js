@@ -15,6 +15,8 @@
                  NOT complete last time (for A/B day schemes);
                  "pick" (default) → remembers your last manual choice
      defaultLevel  starting level index for leveled blocks (before any is set)
+     onDemand    true → filed under the "On demand" column on the home screen
+                 instead of the daily column. Omit for daily routines.
      blocks      the exercises, in order
 
    Block fields:
@@ -60,70 +62,6 @@ const ROUTINES = [
     {name:"Standing reset", mode:"time", sec:20, dose:"20 sec",
      detail:"Stand tall, ribs stacked over pelvis, breathe out fully twice.",
      cue:"Take the new position into standing before you walk off with the old one."}
-  ]
-},
-{
-  id:"tendon", name:"PT — tendon, foot & knee", accent:"#E5A33C",
-  sub:"Daily, alternating A / B. The tendon non-negotiables run on both days; the second half rotates.",
-  variants:["Day A — foot","Day B — spring"],
-  variantTags:["ankle & arch","knee, groin, pogo"],
-  variantMode:"alternate", defaultLevel:0,
-  blocks:[
-    {group:"The tendon — every day", name:"Isometric calf holds", badge:"req", mode:"time", sec:35, sides:2,
-     dose:"1 hold per side, 30–45 sec, bent knee",
-     detail:"Standing, single leg, knee slightly bent. Rise onto the ball of the foot and hold at ~60–70% effort.",
-     cue:"Use proactively, not just after flares. Treat it as tendon-stiffness work and a primer — the evidence for it as a painkiller in the Achilles specifically has not held up."},
-
-    {name:"Calf raises", badge:"req", mode:"reps", target:"15 reps", sets:3, est:100, defaultLevel:2,
-     dose:"3 × 15, 90° gate with the wedge, set 3 at RPE 9",
-     cue:"90° at the ankle only — no dorsiflexion past neutral, wedge in. Alternate straight-knee and bent-knee sets. 3 × 15 is the dose; the levels change how HARD 15 reps are, never how many. If you can grind out 25, you are training calf endurance, not the tendon — add load, don't add reps. First week on a new level, watch the next-morning stiffness rather than chasing RPE 9.",
-     levels:["Both legs, bodyweight. 3 sec up, 3 sec down, full contraction at the top. The floor — drop here on a bad morning.",
-             "Single leg, bodyweight, 15 per side. The fallback for a trip where the load didn't come with you: one leg roughly doubles what two legs carry.",
-             "Single leg with the ~40 lb load, 15 per side, 3 sec up / 3 sec down, set 3 landing at RPE 9. The RPE is the target; the weight is whatever reaches it.",
-             "Single leg, ~40 lb, slower: 4 sec up, 2 sec hold at the top, 4 sec down. Same 15 reps, much more time at high strain. This is the rung to use when 40 lb stops being enough — time under load is the lever you still control.",
-             "Single leg, loaded past 40 lb if you can improvise it — books in a pack, water. 8–10 per side. Tell Carolyn before this one: it is the first rung that leaves her rep prescription."]},
-
-    {name:"Banded inversion (tib posterior)", badge:"req", mode:"reps", target:"15 reps", sides:2, sets:2, est:50,
-     dose:"2×15 per foot (3×15 gym days)",
-     detail:"Band around inside of forefoot (big-toe side), anchored to your outside. Pull foot INWARD — sole turns toward midline. 2 sec in, hold, 2 sec back.",
-     cue:"Primary treatment for the medial point, not a supplement. Historically your most under-delivered item — that is why it runs on both days."},
-
-    {group:"Day A — ankle & arch", variant:0, name:"Banded eversion (peroneals)",
-     mode:"reps", target:"15 reps", sides:2, sets:2, est:50,
-     dose:"2×15 per foot",
-     detail:"Band around outside of forefoot (little-toe side), anchored to your inside. Push foot OUTWARD — sole turns away from midline. Slow and controlled.",
-     cue:"Lateral ankle stability for soccer and uneven ground. This is the item that pushes Day A past 10 min — if you need the time back, drop to 1×15 per foot. It is the only thing on this day neither your card nor Carolyn flags as non-negotiable."},
-
-    {variant:0, name:"Short foot (arch)", badge:"opt", mode:"reps", target:"10 holds × 5 sec", sides:2, est:50,
-     dose:"1 × 10 holds, 5 sec each, per foot",
-     detail:"Barefoot. Without curling toes (toes stay flat), draw the ball of the foot toward the heel. Arch lifts ~0.5 cm.",
-     cue:"Also covered by the inversion band work + Kayanos. Don't let this one balloon the routine."},
-
-    {variant:0, name:"Knee-to-wall test", badge:"opt", mode:"reps", target:"measure LEFT", est:40,
-     dose:"Record LEFT inches + end-feel",
-     detail:"Toe near wall, drive knee forward to touch, heel flat. Brief contact — measure, don't stretch. Note whether the stop is a painless BONY block or a painful/stiff tendon limit.",
-     cue:"Track LEFT vs your own quiet-day baseline (~5.5\"), NOT the R–L gap. Green: ≥5.0\" + painless bony end-feel · Yellow: 3.5–5.0\", or pain at end range · Red: <3.5\", or sharp pain."},
-
-    {group:"Day B — knee, groin & spring", variant:1, name:"Mini-pogos", badge:"new",
-     mode:"time", sec:20, sets:2,
-     dose:"2 × 20 sec, both feet",
-     cue:"SKIP THIS THE DAY YOU PLAY AND THE DAY AFTER — the match already was your spring session, and these want 48 hours between. The block exists to fill the four or five days you don't play, so a match is never the only spring loading you get. Heel loud on landing → stay at this level. Heel lifts in.",
-     levels:["Both feet, small and low. Short ground contact, action at the ankle, knees nearly straight.",
-             "Both feet, then add 10 sec per side single-leg after each set.",
-             "Both feet, 15 sec per side single-leg, then a few low forward bounds."]},
-
-    {variant:1, name:"Quad tendon loading", badge:"new", mode:"time", sec:45, sets:2,
-     dose:"2 × 45 sec, ~70% effort",
-     cue:"For the right knee. Fingertip tenderness at the top-outer corner of the kneecap is the vastus lateralis part of the quad tendon insertion — so load the quad, don't chase the IT band. Rule: pain ≤3–4/10 while loading and back to normal next morning means keep going. Over that twice in a week, drop a level for a week.",
-     levels:["Wall sit, back flat on the wall, thighs around 60° — shallower if the knee grumbles. Both feet.",
-             "Band looped behind the knees, Spanish-squat style, torso upright.",
-             "Single-leg wall sit, or a split-squat hold with the back foot on a chair.",
-             "Move off the isometric: slow split squats or step-downs, 3 sec down / 3 sec up, 3 × 8. Isometrics settle a tendon; heavy slow reps are what rebuild it."]},
-
-    {variant:1, name:"Single-leg balance", badge:"opt", mode:"time", sec:30, sides:2,
-     dose:"30 sec per side",
-     detail:"Stand on one foot, slight knee bend, tripod foot, quiet the wobble.",
-     cue:"Progress: stable floor → towel/pillow → eyes closed. Cheapest ankle-sprain insurance there is, but it also runs in your warm-up — skip it here on a tight day."}
   ]
 },
 {
@@ -277,7 +215,71 @@ const ROUTINES = [
   ]
 },
 {
-  id:"ql", name:"QL flare — extra dose", accent:"#7FA8C9",
+  id:"tendon", name:"PT — tendon, foot & knee", accent:"#E5A33C",
+  sub:"Daily, alternating A / B. The tendon non-negotiables run on both days; the second half rotates.",
+  variants:["Day A — foot","Day B — spring"],
+  variantTags:["ankle & arch","knee, groin, pogo"],
+  variantMode:"alternate", defaultLevel:0,
+  blocks:[
+    {group:"The tendon — every day", name:"Isometric calf holds", badge:"req", mode:"time", sec:35, sides:2,
+     dose:"1 hold per side, 30–45 sec, bent knee",
+     detail:"Standing, single leg, knee slightly bent. Rise onto the ball of the foot and hold at ~60–70% effort.",
+     cue:"Use proactively, not just after flares. Treat it as tendon-stiffness work and a primer — the evidence for it as a painkiller in the Achilles specifically has not held up."},
+
+    {name:"Calf raises", badge:"req", mode:"reps", target:"15 reps", sets:3, est:100, defaultLevel:2,
+     dose:"3 × 15, 90° gate with the wedge, set 3 at RPE 9",
+     cue:"90° at the ankle only — no dorsiflexion past neutral, wedge in. Alternate straight-knee and bent-knee sets. 3 × 15 is the dose; the levels change how HARD 15 reps are, never how many. If you can grind out 25, you are training calf endurance, not the tendon — add load, don't add reps. First week on a new level, watch the next-morning stiffness rather than chasing RPE 9.",
+     levels:["Both legs, bodyweight. 3 sec up, 3 sec down, full contraction at the top. The floor — drop here on a bad morning.",
+             "Single leg, bodyweight, 15 per side. The fallback for a trip where the load didn't come with you: one leg roughly doubles what two legs carry.",
+             "Single leg with the ~40 lb load, 15 per side, 3 sec up / 3 sec down, set 3 landing at RPE 9. The RPE is the target; the weight is whatever reaches it.",
+             "Single leg, ~40 lb, slower: 4 sec up, 2 sec hold at the top, 4 sec down. Same 15 reps, much more time at high strain. This is the rung to use when 40 lb stops being enough — time under load is the lever you still control.",
+             "Single leg, loaded past 40 lb if you can improvise it — books in a pack, water. 8–10 per side. Tell Carolyn before this one: it is the first rung that leaves her rep prescription."]},
+
+    {name:"Banded inversion (tib posterior)", badge:"req", mode:"reps", target:"15 reps", sides:2, sets:2, est:50,
+     dose:"2×15 per foot (3×15 gym days)",
+     detail:"Band around inside of forefoot (big-toe side), anchored to your outside. Pull foot INWARD — sole turns toward midline. 2 sec in, hold, 2 sec back.",
+     cue:"Primary treatment for the medial point, not a supplement. Historically your most under-delivered item — that is why it runs on both days."},
+
+    {group:"Day A — ankle & arch", variant:0, name:"Banded eversion (peroneals)",
+     mode:"reps", target:"15 reps", sides:2, sets:2, est:50,
+     dose:"2×15 per foot",
+     detail:"Band around outside of forefoot (little-toe side), anchored to your inside. Push foot OUTWARD — sole turns away from midline. Slow and controlled.",
+     cue:"Lateral ankle stability for soccer and uneven ground. This is the item that pushes Day A past 10 min — if you need the time back, drop to 1×15 per foot. It is the only thing on this day neither your card nor Carolyn flags as non-negotiable."},
+
+    {variant:0, name:"Short foot (arch)", badge:"opt", mode:"reps", target:"10 holds × 5 sec", sides:2, est:50,
+     dose:"1 × 10 holds, 5 sec each, per foot",
+     detail:"Barefoot. Without curling toes (toes stay flat), draw the ball of the foot toward the heel. Arch lifts ~0.5 cm.",
+     cue:"Also covered by the inversion band work + Kayanos. Don't let this one balloon the routine."},
+
+    {variant:0, name:"Knee-to-wall test", badge:"opt", mode:"reps", target:"measure LEFT", est:40,
+     dose:"Record LEFT inches + end-feel",
+     detail:"Toe near wall, drive knee forward to touch, heel flat. Brief contact — measure, don't stretch. Note whether the stop is a painless BONY block or a painful/stiff tendon limit.",
+     cue:"Track LEFT vs your own quiet-day baseline (~5.5\"), NOT the R–L gap. Green: ≥5.0\" + painless bony end-feel · Yellow: 3.5–5.0\", or pain at end range · Red: <3.5\", or sharp pain."},
+
+    {group:"Day B — knee, groin & spring", variant:1, name:"Mini-pogos", badge:"new",
+     mode:"time", sec:20, sets:2,
+     dose:"2 × 20 sec, both feet",
+     cue:"SKIP THIS THE DAY YOU PLAY AND THE DAY AFTER — the match already was your spring session, and these want 48 hours between. The block exists to fill the four or five days you don't play, so a match is never the only spring loading you get. Heel loud on landing → stay at this level. Heel lifts in.",
+     levels:["Both feet, small and low. Short ground contact, action at the ankle, knees nearly straight.",
+             "Both feet, then add 10 sec per side single-leg after each set.",
+             "Both feet, 15 sec per side single-leg, then a few low forward bounds."]},
+
+    {variant:1, name:"Quad tendon loading", badge:"new", mode:"time", sec:45, sets:2,
+     dose:"2 × 45 sec, ~70% effort",
+     cue:"For the right knee. Fingertip tenderness at the top-outer corner of the kneecap is the vastus lateralis part of the quad tendon insertion — so load the quad, don't chase the IT band. Rule: pain ≤3–4/10 while loading and back to normal next morning means keep going. Over that twice in a week, drop a level for a week.",
+     levels:["Wall sit, back flat on the wall, thighs around 60° — shallower if the knee grumbles. Both feet.",
+             "Band looped behind the knees, Spanish-squat style, torso upright.",
+             "Single-leg wall sit, or a split-squat hold with the back foot on a chair.",
+             "Move off the isometric: slow split squats or step-downs, 3 sec down / 3 sec up, 3 × 8. Isometrics settle a tendon; heavy slow reps are what rebuild it."]},
+
+    {variant:1, name:"Single-leg balance", badge:"opt", mode:"time", sec:30, sides:2,
+     dose:"30 sec per side",
+     detail:"Stand on one foot, slight knee bend, tripod foot, quiet the wobble.",
+     cue:"Progress: stable floor → towel/pillow → eyes closed. Cheapest ankle-sprain insurance there is, but it also runs in your warm-up — skip it here on a tight day."}
+  ]
+},
+{
+  id:"ql", name:"QL flare — extra dose", accent:"#7FA8C9", onDemand:true,
   sub:"For when the right QL is actually cranky — the full card, on top of Mobility Day A, up to twice a day. Slow nasal breathing throughout: the QL grips, it doesn't tear.",
   blocks:[
     {group:"1 — Open up", name:"Cat–cow", mode:"time", sec:60, dose:"60 sec · slow, breath-led",
@@ -311,7 +313,7 @@ const ROUTINES = [
   ]
 },
 {
-  id:"warmup", name:"Pre-soccer warm-up", accent:"#8FBF6B",
+  id:"warmup", name:"Pre-soccer warm-up", accent:"#8FBF6B", onDemand:true,
   sub:"Do in full before every game or session. Kayanos + heel lifts, flat ground. Collagen 15 g + vitamin C ~30–45 min before; hydrate.",
   blocks:[
     {group:"1 — Easy jog (build)", name:"Jog — relaxed shuffle", mode:"time", sec:90,

@@ -28,6 +28,34 @@ button{font:inherit;color:inherit;background:none;border:none;cursor:pointer}
 .card .sub{color:var(--dim);font-size:13px;margin-bottom:11px}
 .meta{display:flex;gap:14px;font-size:11.5px;color:var(--dimmer);letter-spacing:.1em;text-transform:uppercase}
 .meta b{color:var(--bone);font-weight:650;letter-spacing:0;text-transform:none;font-size:12.5px}
+/* Home splits into a daily column and an on-demand column. Cards go compact
+   inside them — the subtitle and move count return once there's width. */
+/* min-width:0 — grid items default to min-content, so a long routine name
+   would otherwise push the second column off-screen. */
+.cols{display:grid;grid-template-columns:1fr 1fr;gap:12px;align-items:start}
+.cols>div{min-width:0}
+.cols .card h2,.cols .card .meta{overflow-wrap:break-word}
+.col-h{display:flex;flex-direction:column;gap:2px;margin:0 0 10px;padding-bottom:7px;
+  border-bottom:1px solid var(--line);font-size:10px;letter-spacing:.14em;
+  text-transform:uppercase;color:var(--dim)}
+.col-h s{text-decoration:none;font-size:9.5px;letter-spacing:.04em;
+  text-transform:none;color:var(--dimmer)}
+.cols .card{padding:12px 11px 10px;margin-bottom:10px}
+.cols .card h2{font-size:14px;line-height:1.25}
+.cols .card .sub{display:none}
+.cols .card .meta{flex-direction:column;gap:2px;font-size:10px}
+.cols .card .meta .moves{display:none}
+.cols .card .meta b{font-size:11.5px}
+.cols .card .did{margin-top:8px;padding-top:8px;font-size:10.5px}
+@media (min-width:560px){
+  .cols{gap:14px}
+  .cols .card{padding:14px 13px 12px}
+  .cols .card h2{font-size:15.5px}
+  .cols .card .sub{display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;
+    overflow:hidden;font-size:12px;margin-bottom:9px}
+  .cols .card .meta{flex-direction:row;flex-wrap:wrap;gap:10px}
+  .cols .card .meta .moves{display:inline}
+}
 .did{margin-top:9px;padding-top:9px;border-top:1px solid var(--line);
   font-size:12px;color:var(--dimmer)}
 .did b{color:var(--dim);font-weight:600}

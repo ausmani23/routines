@@ -165,6 +165,7 @@ function go(id){
   document.querySelectorAll(".screen").forEach(s=>s.classList.toggle("on", s.id===id));
   window.scrollTo(0,0);
   if(id!=="run"){ stopTick(); keepAwake(false); clearScheduled(); mediaSession(false); state.running=false; }
+  if(id==="home") applySWReload();   // a deploy that landed mid-routine applies here
 }
 document.addEventListener("click", e=>{ const b=e.target.closest("[data-go]"); if(b) go(b.dataset.go); });
 
@@ -455,8 +456,20 @@ $("#tgSound").onclick = ()=>{ sound=!sound; db.sound=sound; saveDB(); paintToggl
   if(sound){unlockAudio();ping();} };
 $("#tgVoice").onclick = ()=>{ voice=!voice; db.voice=voice; saveDB(); paintToggles(); };
 
-/* offline: cache-first service worker (only meaningful over https) */
+/* offline: cache-first service worker (only meaningful over https)
+   The worker serves cached files, so after a deploy the page in front of you is
+   still running the old JS/CSS until it reloads. Reload as soon as the new
+   worker takes control — but never mid-routine, since that would kill a running
+   timer. Deferred reloads fire on the way back to the home screen. */
+let swReloadPending = false;
+function applySWReload(){ if(swReloadPending && !state.running) location.reload(); }
 if("serviceWorker" in navigator && window.isSecureContext){
+  const hadController = !!navigator.serviceWorker.controller;
+  navigator.serviceWorker.addEventListener("controllerchange", ()=>{
+    if(!hadController || swReloadPending) return;  // first install: nothing stale to refresh
+    swReloadPending = true;
+    applySWReload();
+  });
   window.addEventListener("load", ()=>{ navigator.serviceWorker.register("sw.js").catch(()=>{}); });
 }
 

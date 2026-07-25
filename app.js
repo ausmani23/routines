@@ -176,6 +176,7 @@ function exLevel(r,b){
   if(!b.levels) return 0;
   const ex = db.exLevels[r.id]||{};
   let v = ex[b.name];
+  if(v==null) v = b.defaultLevel;           // per-exercise starting point
   if(v==null) v = db.levels[r.id];          // migrate old routine-wide level
   if(v==null) v = r.defaultLevel||0;
   return Math.min(Math.max(v,0), b.levels.length-1);

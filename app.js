@@ -22,13 +22,13 @@ let state = { routine:null, variant:0, moves:0, seq:[], i:0, left:0, up:0, total
    log: completion timestamps (epoch ms) per routine id. */
 const DB_KEY = "routines.v1";
 function loadDB(){
-  const def = { sound:true, voice:true, levels:{}, exLevels:{}, variantSel:{}, variantDone:{}, log:{} };
+  const def = { sound:true, levels:{}, exLevels:{}, variantSel:{}, variantDone:{}, log:{} };
   try{ return Object.assign(def, JSON.parse(localStorage.getItem(DB_KEY)||"{}")); }
   catch(e){ return def; }
 }
 const db = loadDB();
 function saveDB(){ try{ localStorage.setItem(DB_KEY, JSON.stringify(db)); }catch(e){} }
-let sound = db.sound !== false, voice = db.voice !== false;
+let sound = db.sound !== false;
 
 const DAY = 864e5;
 function dayOf(ts){ const d=new Date(ts); return new Date(d.getFullYear(),d.getMonth(),d.getDate()).getTime(); }
@@ -120,9 +120,7 @@ function mediaSession(on){
   }catch(e){}
 }
 
-function say(t){ if(!voice||!window.speechSynthesis) return;
-  try{ speechSynthesis.cancel(); const u=new SpeechSynthesisUtterance(t); u.rate=1.02; speechSynthesis.speak(u);}catch(e){} }
-function unlockAudio(){ try{ ctx(); if(window.speechSynthesis) speechSynthesis.speak(new SpeechSynthesisUtterance("")); }catch(e){} }
+function unlockAudio(){ try{ ctx(); }catch(e){} }
 
 /* ---------- keeping the screen on ----------
    Wake Lock is the real mechanism but needs a secure context (https:// or localhost).
@@ -327,7 +325,7 @@ function paintBeads(){
     else { el.classList.remove("done"); bar.style.width="0"; }
   });
 }
-const C = 2*Math.PI*110;
+const C = 2*Math.PI*66;
 function paintRing(){
   const s=state.seq[state.i], ring=$("#ring");
   ring.style.strokeDasharray = C;
@@ -367,10 +365,6 @@ function loadStep(i, opts){
 
   paintRing(); paintBeads();
   if(opts.silent) return;
-  if(s.type==="work"){
-    const spoken = s.side ? `${s.name}. ${s.side}.` : s.name;
-    say(reps ? `${spoken} ${s.target}.` : spoken);
-  }
   if(s.mode==="reps") ping(s.type==="prep"?520:660,.13,.2);
 }
 function advance(){
@@ -405,7 +399,7 @@ function startTick(){
 function stopTick(){ if(state.tick){ clearInterval(state.tick); state.tick=null; } }
 function finish(){
   stopTick(); state.running=false; keepAwake(false); clearScheduled();
-  ping(760,.14,.25); setTimeout(()=>ping(1010,.22,.25),150); say("Done.");
+  ping(760,.14,.25); setTimeout(()=>ping(1010,.22,.25),150);
   const r=state.routine, id=r.id;
   (db.log[id] = db.log[id]||[]).push(Date.now());
   if(r.variants) db.variantDone[id]=state.variant;
@@ -448,13 +442,11 @@ $("#btnPrev").onclick = ()=>{
   else loadStep(0);
 };
 function paintToggles(){
-  const s=$("#tgSound"), v=$("#tgVoice");
+  const s=$("#tgSound");
   s.setAttribute("aria-pressed",sound); s.textContent = sound?"Beeps on":"Beeps off";
-  v.setAttribute("aria-pressed",voice); v.textContent = voice?"Voice on":"Voice off";
 }
 $("#tgSound").onclick = ()=>{ sound=!sound; db.sound=sound; saveDB(); paintToggles();
   if(sound){unlockAudio();ping();} };
-$("#tgVoice").onclick = ()=>{ voice=!voice; db.voice=voice; saveDB(); paintToggles(); };
 
 /* offline: cache-first service worker (only meaningful over https)
    The worker serves cached files, so after a deploy the page in front of you is

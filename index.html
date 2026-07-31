@@ -20,7 +20,6 @@
   <div id="cards"></div>
   <div class="toggles">
     <button class="tg" id="tgSound" aria-pressed="true">Beeps on</button>
-    <button class="tg" id="tgVoice" aria-pressed="true">Voice on</button>
   </div>
   <p class="hint" id="hint">Timed moves count down and advance on their own. Rep-based moves wait
   for you — tap the dial when you finish the set.</p>
@@ -40,18 +39,18 @@
   <div class="beads" id="beads"></div>
   <div class="stage">
     <div class="phase" id="phase"></div>
+    <h2 class="exname" id="rName"></h2>
+    <div class="exside" id="tSide"></div>
     <div class="ringwrap" id="ringwrap">
-      <svg width="236" height="236" viewBox="0 0 236 236" aria-hidden="true">
-        <circle class="ring-bg" cx="118" cy="118" r="110"></circle>
-        <circle class="ring-fg" id="ring" cx="118" cy="118" r="110"></circle>
+      <svg width="150" height="150" viewBox="0 0 150 150" aria-hidden="true">
+        <circle class="ring-bg" cx="75" cy="75" r="66"></circle>
+        <circle class="ring-fg" id="ring" cx="75" cy="75" r="66"></circle>
       </svg>
       <div class="clock">
         <div class="t" id="tRemain">0</div>
-        <div class="side" id="tSide"></div>
         <div class="elapsed" id="tElapsed"></div>
       </div>
     </div>
-    <h2 class="exname" id="rName"></h2>
     <p class="exlvl" id="rLvl"></p>
     <p class="excue" id="rCue"></p>
   </div>

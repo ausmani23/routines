@@ -135,6 +135,15 @@ const ROUTINES = [
      detail:"On hands and knees. INHALE: belly drops, chest and tailbone lift. EXHALE: round the whole spine up, chin and tailbone tuck. Let the movement start at the pelvis and travel up the spine, one full breath per cycle.",
      cue:"Unhurried. This is the on-ramp, not a stretch."},
 
+    {group:"Neck & upper back — desk antidote", name:"Thread the needle", badge:"new", mode:"time", sec:30, sides:2, dose:"30 sec each side, flowing",
+     detail:"Still on hands and knees from cat–cow. Slide one arm under the body, palm up, along the floor until that shoulder and ear settle toward the mat. Pause one breath, then unwind and sweep the same arm up toward the ceiling, letting your eyes follow the hand. Flow between the two — under, then up — for the 30 seconds, then swap arms.",
+     cue:"This is the move for the trap/neck tweaks. Hours at the desk stiffen the upper back until it stops rotating, and the neck ends up doing every turn alone — that is what gives out. Following the hand with the eyes is the point: it rehearses exactly the look-up-and-over that hurt, driven by the upper back instead of the neck."},
+
+    {name:"Chin tucks", badge:"new", mode:"reps", target:"8 reps · 3 sec", est:40,
+     dose:"8 reps, hold 3 sec each",
+     detail:"Sitting or standing tall. Without nodding up or down, glide the chin straight back — think double chin — until the back of the neck feels long. Hold 3 seconds, release gently. The movement is small and horizontal; if something is nodding, it's too big.",
+     cue:"The direct antidote to the hunch: forward-head sitting puts the traps and levator on duty all day holding the head up, and that overworked corner is what keeps tweaking. This wakes the deep neck muscles that should be doing the job. A small daily dose beats stretching it after it's already angry."},
+
     {name:"Half-kneeling lunge", mode:"time", sec:45, sides:2, dose:"45 sec each side, rocking",
      detail:"Kneel on one knee, front foot flat, torso tall. Tuck the pelvis under, squeeze the glute on the kneeling side, then rock gently forward 2–3 seconds and back. Keep the tuck the whole time.",
      cue:"Runs on both days now — it earns its place. The tuck-then-rock is the whole exercise; lunging without it just cranks the low back."},

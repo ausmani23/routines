@@ -16,9 +16,14 @@
 <body>
 
 <section id="home" class="screen on"><div class="wrap">
-  <div class="masthead"><h1>Routines</h1><span id="clockNow"></span></div>
+  <div class="masthead"><h1>Today</h1><span id="clockNow"></span></div>
+  <nav class="nav">
+    <button class="nv" data-go="home">Today</button>
+    <button class="nv" data-go="upcoming">Upcoming</button>
+    <button class="nv" data-go="browse">Browse</button>
+  </nav>
+  <p class="dayline" id="dayLine"></p>
   <div id="cards"></div>
-  <div id="strength"></div>
   <div class="toggles">
     <button class="tg" id="tgSound" aria-pressed="true">Beeps on</button>
     <button class="tg" data-go="notes">Notes &amp; export</button>
@@ -28,8 +33,32 @@
   <p class="hint" id="awakeStatus" style="border:0;padding-top:6px;margin-top:0"></p>
 </div></section>
 
+<section id="upcoming" class="screen"><div class="wrap">
+  <div class="masthead"><h1>Upcoming</h1><span id="upBlock"></span></div>
+  <nav class="nav">
+    <button class="nv" data-go="home">Today</button>
+    <button class="nv" data-go="upcoming">Upcoming</button>
+    <button class="nv" data-go="browse">Browse</button>
+  </nav>
+  <p class="prognote" id="upNote"></p>
+  <div id="upDays"></div>
+  <p class="hint" id="upHint">Drag a session by its handle to move it to another day. Moves are kept
+  on this device — they don't change the programmed block, and the next re-program starts clean.</p>
+  <button class="resetsched" id="upReset">Reset to programmed schedule</button>
+</div></section>
+
+<section id="browse" class="screen"><div class="wrap">
+  <div class="masthead"><h1>Browse</h1><span id="brCount"></span></div>
+  <nav class="nav">
+    <button class="nv" data-go="home">Today</button>
+    <button class="nv" data-go="upcoming">Upcoming</button>
+    <button class="nv" data-go="browse">Browse</button>
+  </nav>
+  <div id="brBody"></div>
+</div></section>
+
 <section id="detail" class="screen"><div class="wrap">
-  <button class="back" data-go="home">← All routines</button>
+  <button class="back" data-back>← Back</button>
   <h2 class="detail-h" id="dName"></h2>
   <p class="detail-sub" id="dSub"></p>
   <div id="dLevels"></div>
@@ -68,7 +97,7 @@
 </div></section>
 
 <section id="lift" class="screen"><div class="wrap">
-  <button class="back" data-go="home">← Home</button>
+  <button class="back" data-back>← Back</button>
   <h2 class="detail-h" id="lName"></h2>
   <p class="detail-sub" id="lSub"></p>
   <div id="lBody"></div>
@@ -105,12 +134,14 @@
   <p class="streakline" id="doneStreak"></p>
   <button class="again" id="btnAgain">Run again</button>
   <button class="again" data-go="notes">Add a note</button>
-  <button class="again" data-go="home">All routines</button>
+  <button class="again" data-go="home">Back to today</button>
 </div></div></section>
 
 <script src="routines.js"></script>
 <script src="program.js"></script>
+<script src="schedule.js"></script>
 <script src="app.js"></script>
 <script src="lift.js"></script>
+<script src="drag.js"></script>
 </body>
 </html>

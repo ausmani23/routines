@@ -17,7 +17,10 @@ button{font:inherit;color:inherit;background:none;border:none;cursor:pointer}
 .masthead{display:flex;align-items:baseline;justify-content:space-between;
   border-bottom:1px solid var(--line);padding-bottom:12px;margin-bottom:22px}
 .masthead h1{font-size:20px;font-weight:750;letter-spacing:-.02em;margin:0}
-.masthead span{font-size:11px;color:var(--dimmer);letter-spacing:.14em;text-transform:uppercase}
+/* max-width so a long block name wraps under itself instead of running back
+   across the heading — "London — return to soccer, part 1" is not short. */
+.masthead span{font-size:11px;color:var(--dimmer);letter-spacing:.14em;text-transform:uppercase;
+  max-width:54%;text-align:right;line-height:1.35}
 
 .card{display:block;width:100%;text-align:left;background:var(--panel);border:1px solid var(--line);
   border-radius:var(--r);padding:16px 16px 14px;margin-bottom:12px;position:relative;overflow:hidden;
@@ -157,12 +160,62 @@ button{font:inherit;color:inherit;background:none;border:none;cursor:pointer}
   font-size:12px;color:var(--dimmer);text-align:center}
 .tg[aria-pressed="true"]{color:var(--signal);border-color:var(--signal)}
 
-/* ---------- strength: home section ---------- */
-#strength{margin-top:26px}
-#strength .col-h{margin-bottom:10px}
-.prognote{color:var(--dim);font-size:12.5px;line-height:1.55;margin:0 0 12px}
-#strength .cols{grid-template-columns:1fr 1fr 1fr;gap:10px}
-@media (max-width:400px){#strength .cols{grid-template-columns:1fr 1fr}}
+/* ---------- navigation: Today / Upcoming / Browse ----------
+   Same segmented-control language as the variant picker on the detail screen,
+   one size down, so the three ways into the app read as one control. */
+.nav{display:flex;gap:6px;margin:-8px 0 18px}
+.nv{flex:1;border:1px solid var(--line);background:var(--panel);border-radius:10px;
+  padding:8px 4px;font-size:12.5px;font-weight:600;color:var(--dim);text-align:center;
+  transition:all .14s ease}
+.nv[aria-pressed="true"]{background:var(--signal);color:#08131A;border-color:var(--signal);font-weight:700}
+.dayline{font-size:12.5px;color:var(--dimmer);margin:0 0 16px;
+  letter-spacing:.02em;text-transform:capitalize}
+.prognote{color:var(--dim);font-size:12.5px;line-height:1.55;margin:0 0 18px}
+
+/* ---------- areas ---------- */
+.area{margin-bottom:26px}
+.area:last-child{margin-bottom:0}
+.area .col-h{margin-bottom:10px}
+.restline{color:var(--dimmer);font-size:12.5px;line-height:1.5;margin:0 0 4px;
+  border:1px dashed var(--line);border-radius:var(--r);padding:13px 15px}
+.restline b{color:var(--dim);font-weight:650}
+/* A finished item stays on the list — the day should still read as a record at
+   9pm — but recedes, and sinks below the unfinished ones in its group. */
+.card.is-done{opacity:.52}
+.card.is-done h2{text-decoration:line-through;text-decoration-color:var(--dimmer)}
+.tickmark{position:absolute;top:13px;right:14px;color:var(--signal);font-size:14px;font-weight:800}
+.whenline{margin-top:8px;font-size:11px;letter-spacing:.1em;text-transform:uppercase;color:var(--signal)}
+.ondemand .card .sub{display:none}
+
+/* ---------- upcoming ---------- */
+.day{padding:14px 0 4px;border-top:1px solid var(--line)}
+.day:first-child{border-top:none;padding-top:0}
+.day-h{display:flex;align-items:baseline;gap:8px;margin:0 0 9px;
+  font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:var(--dim)}
+.day-h b{font-weight:700;color:var(--bone)}
+.day-h s{text-decoration:none;letter-spacing:.04em;text-transform:none;
+  font-size:11px;color:var(--dimmer)}
+.dailyline{margin:0 0 10px;font-size:11.5px;line-height:1.5;color:var(--dimmer)}
+.dailyline b{color:var(--dim);font-weight:650}
+/* The slot wraps the card so the grip can sit over its corner without being
+   inside the button (a button inside a button is invalid and untappable). */
+.slot{position:relative}
+.slot .card{padding-right:44px}
+.grip{position:absolute;top:0;right:0;width:40px;height:100%;color:var(--dimmer);
+  font-size:15px;line-height:1;border-left:1px solid var(--line);
+  border-radius:0 var(--r) var(--r) 0;touch-action:none;cursor:grab}
+.grip:active{cursor:grabbing;color:var(--signal);background:var(--panel-2)}
+.slot.moved .card::after{content:"moved";position:absolute;bottom:11px;right:52px;
+  font-size:9px;letter-spacing:.12em;text-transform:uppercase;color:var(--warm)}
+.slot.dragging{opacity:.28}
+.dragghost{opacity:.94;filter:brightness(1.12);box-shadow:0 12px 34px rgba(0,0,0,.55);
+  border-radius:var(--r)}
+.dragghost .grip{color:var(--signal)}
+.day.dropping{background:color-mix(in srgb,var(--signal) 9%,transparent);
+  outline:1px dashed var(--signal);outline-offset:6px;border-radius:8px}
+.resetsched{display:block;width:100%;margin-top:14px;border:1px solid var(--line);
+  background:var(--panel);border-radius:11px;padding:11px;font-size:12.5px;color:var(--dimmer)}
+.resetsched:active{background:var(--panel-2)}
 
 /* ---------- strength: the session screen ----------
    The row grid is the whole layout: set · previous · weight · reps · rpe · tick.

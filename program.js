@@ -20,16 +20,32 @@
      weeks     how many weeks the block runs
      start     ISO date the block began (drives the week counter on home)
      focus     one line: what this block is trying to buy
-     note      shown on the home screen above the workout cards
+     note      the block's rationale, shown on the Upcoming screen. NOT the
+               day-by-day plan — that lives in `schedule` below and there is
+               exactly one source of truth for it.
      mas       maximal aerobic speed, in m/s, used to compute interval
                distances. ALWAYS record `source` — "assumed" vs "tested" —
                so a guess is never later mistaken for a measurement.
+     schedule  the calendar: one entry per day of the block, in date order.
+                 sid   unique and stable WITHIN the block. It is what an
+                       in-app drag writes its override against, and what a
+                       logged session records, so the same workout on two days
+                       is two independently tickable slots.
+                 date  local "YYYY-MM-DD"
+                 w     a workout id, or omit it and set `rest:true`
+               A workout with no entry here and no `sched` (the spare session)
+               is reachable from Browse but never scheduled.
      workouts  the sessions
 
    Workout fields:
      id        unique and STABLE — the log is keyed to it, so never rename an
                id when you change a day's contents
      name, accent, sub
+     short     compact name for the daily summary line on Upcoming
+     cat     which area it files under: "strength" | "cardio" | "check".
+               Drives the Today/Browse grouping. Defaults to strength.
+     sched     {freq:"daily"} → due every day and not part of the dated
+               calendar (the morning check-in). Omit on ordinary sessions.
      unit      what one exercise is called on the card — "lift" (default),
                "drill" on conditioning days, "check" on the check-in
      freeform  true → starts empty, you add exercises as you go
@@ -60,7 +76,7 @@ const PROGRAM = {
   weeks: 2,
   start: "2026-08-11",
   focus: "Eleven days, eight sessions, one job: rebuild the running and jumping capacity that fifteen days off and a year without run training took away — without spiking the Achilles.",
-  note: "Day 1 S1 · 2 C1 · 3 rest · 4 S2 · 5 C2 · 6 S1 again · 7 rest · 8 C3 · 9 S2 again · 10 C4 · 11 rest. On the four strength days the loaded calf raise REPLACES the PT 3×15 — do one or the other, never both. PT mini-pogos pause for the block; the jump work here covers it. Log the check-in every morning, before coffee.",
+  note: "On the four strength days the loaded calf raise REPLACES the PT 3×15 — do one or the other, never both. PT mini-pogos pause for the block; the jump work here covers it. Log the check-in every morning, before coffee.",
 
   /* Last tested Aug 2025: 1200 m in 4:26, and the Jul-Oct 2025 templates ran
      100% MAS at 130 m / 30 s → ~4.4 m/s. Discounted to 3.9 for a year without
@@ -71,12 +87,31 @@ const PROGRAM = {
   mas: { value: 3.9, units: "m/s", source: "assumed", date: "2026-08-10",
          basis: "4.4 m/s tested Aug 2025, discounted for detraining" },
 
+  /* Eleven days. Strength and conditioning alternate, never back to back, and
+     the two rest days sit either side of the block's midpoint. This array is
+     the ONLY statement of what happens when — `note` above no longer repeats
+     it. Moving a day in-app writes an override against the `sid`; it does not
+     edit this. */
+  schedule: [
+    { sid:"d1",  date:"2026-08-11", w:"s-post"  },
+    { sid:"d2",  date:"2026-08-12", w:"c-run"   },
+    { sid:"d3",  date:"2026-08-13", rest:true   },
+    { sid:"d4",  date:"2026-08-14", w:"s-uni"   },
+    { sid:"d5",  date:"2026-08-15", w:"c-cod"   },
+    { sid:"d6",  date:"2026-08-16", w:"s-post"  },
+    { sid:"d7",  date:"2026-08-17", rest:true   },
+    { sid:"d8",  date:"2026-08-18", w:"c-tempo" },
+    { sid:"d9",  date:"2026-08-19", w:"s-uni"   },
+    { sid:"d10", date:"2026-08-20", w:"c-grid"  },
+    { sid:"d11", date:"2026-08-21", rest:true   }
+  ],
+
   workouts: [
     /* ---------------------------------------------------------------- */
     {
       id: "checkin",
-      name: "Morning check-in",
-      accent: "#C9A227", unit: "check",
+      name: "Morning check-in", short: "Check-in",
+      accent: "#C9A227", unit: "check", cat: "check", sched: {freq:"daily"},
       sub: "Ten seconds, before you get going. This is what the heel-lift weaning is being steered by.",
       exercises: [
         { name:"Morning stiffness & pain", sets:1,
@@ -91,8 +126,8 @@ const PROGRAM = {
     {
       id: "s-post",
       name: "S1 · Posterior + push",
-      accent: "#C97F5B",
-      sub: "Days 1 and 6. Deadlift day. The heaviest session of the block and the furthest from any running.",
+      accent: "#C97F5B", cat: "strength",
+      sub: "Deadlift day. The heaviest session of the block and the furthest from any running.",
       exercises: [
         { name:"Trap-bar jump squat", sets:3, fields:["weight","reps","rpe"],
           target:"3 × 3 · jump fast and high", rest:120,
@@ -119,8 +154,8 @@ const PROGRAM = {
     {
       id: "s-uni",
       name: "S2 · Unilateral + lateral",
-      accent: "#B48EAD",
-      sub: "Days 4 and 9. Single-leg strength and the frontal plane — the stuff soccer actually asks for.",
+      accent: "#B48EAD", cat: "strength",
+      sub: "Single-leg strength and the frontal plane — the stuff soccer actually asks for.",
       exercises: [
         { name:"Single-leg box jump", sets:3, fields:["reps","rpe"],
           target:"3 × 3 each · land on ONE leg", rest:120,
@@ -153,8 +188,8 @@ const PROGRAM = {
     {
       id: "c-run",
       name: "C1 · Return to run",
-      accent: "#8FBF6B", unit: "drill",
-      sub: "Day 2. Your first running in months. Grass, easy, nothing maximal — this day exists to buy surface tolerance, not fitness.",
+      accent: "#8FBF6B", unit: "drill", cat: "cardio",
+      sub: "Your first running in months. Grass, easy, nothing maximal — this day exists to buy surface tolerance, not fitness.",
       exercises: [
         { name:"Easy continuous run", sets:1, fields:["distance","duration","rpe"],
           target:"10 min easy · RPE 4–5",
@@ -176,8 +211,8 @@ const PROGRAM = {
     {
       id: "c-cod",
       name: "C2 · Change of direction",
-      accent: "#6FAF9F", unit: "drill",
-      sub: "Day 5. First cutting since you stopped playing. Everything at 60–70% — this is a technique day wearing a conditioning day's clothes.",
+      accent: "#6FAF9F", unit: "drill", cat: "cardio",
+      sub: "First cutting since you stopped playing. Everything at 60–70% — this is a technique day wearing a conditioning day's clothes.",
       exercises: [
         { name:"Easy continuous run", sets:1, fields:["distance","duration","rpe"],
           target:"8 min easy · RPE 4–5", warmup:true,
@@ -205,8 +240,8 @@ const PROGRAM = {
     {
       id: "c-tempo",
       name: "C3 · MAS tempo intervals",
-      accent: "#5B8FC9", unit: "drill",
-      sub: "Day 8. The session that matters most — and the one that measures your MAS without a test.",
+      accent: "#5B8FC9", unit: "drill", cat: "cardio",
+      sub: "The session that matters most — and the one that measures your MAS without a test.",
       exercises: [
         { name:"Easy continuous run", sets:1, fields:["distance","duration","rpe"],
           target:"5 min easy · RPE 4", warmup:true, note:"Half-height heel lifts." },
@@ -224,8 +259,8 @@ const PROGRAM = {
     {
       id: "c-grid",
       name: "C4 · Grids + COD",
-      accent: "#C95B7F", unit: "drill",
-      sub: "Day 10. The hardest conditioning day, and the last before travel. Capped on purpose.",
+      accent: "#C95B7F", unit: "drill", cat: "cardio",
+      sub: "The hardest conditioning day, and the last before travel. Capped on purpose.",
       exercises: [
         { name:"Easy continuous run", sets:1, fields:["distance","duration","rpe"],
           target:"5 min easy · RPE 4", warmup:true, note:"Half-height heel lifts." },
@@ -250,7 +285,7 @@ const PROGRAM = {
     {
       id: "free",
       name: "Spare session",
-      accent: "#7F8FA3",
+      accent: "#7F8FA3", cat: "strength",
       sub: "Empty. For anything unplanned — a hotel session, a swap, a day the gym is shut.",
       freeform: true,
       exercises: []

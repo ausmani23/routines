@@ -11,8 +11,11 @@
 
 /* ---------- shape of the stored log ----------
    db.strength.sessions: newest last.
-     { w, block, week, start, end, note,
+     { w, sid, block, week, start, end, note,
        sets:[{ex, n, weight, reps, distance, duration, rpe}] }
+   `sid` is the schedule slot it was logged against (see schedule.js) and may
+   be absent — sessions logged before the calendar existed simply lack it, and
+   anything opened from Browse has no slot to record.
    `ex` is the exercise name and `n` the set number, so history survives a
    workout being reordered or renamed.
 
@@ -81,32 +84,32 @@ function programWeek(){
 }
 function workingSets(w){ return w.exercises.reduce((a,e)=>a+(e.warmup?0:(e.sets||0)),0); }
 
-/* ---------- home screen section ---------- */
-function liftCardHTML(w){
+/* ---------- the card ----------
+   Rendered into whichever list screen asked for it — Today, Upcoming or
+   Browse. `opts.sid` is the scheduled slot it came from (null when it came
+   from Browse), `opts.done` marks it finished for that day, `opts.when` adds a
+   scheduling line. Mirrors cardHTML in app.js so both kinds of card can sit in
+   one list. */
+function workoutCardHTML(w, opts){
+  opts = opts || {};
   const last = lastSession(w.id);
   const n = workingSets(w), ex = w.exercises.length;
   const unit = w.unit || "lift";   // "drill" on conditioning days, "check" on the check-in
   return `
-    <button class="card" data-w="${w.id}" style="--accent:${w.accent||'#C97F5B'}">
+    <button class="card${opts.done?" is-done":""}" data-w="${w.id}"
+      ${opts.sid?`data-sid="${opts.sid}"`:""} style="--accent:${w.accent||'#C97F5B'}">
+      ${opts.done?`<span class="tickmark">✓</span>`:""}
       <h2>${w.name}</h2><div class="sub">${w.sub||""}</div>
       <div class="meta">
         ${ex ? `<span><b>${ex}</b> ${unit}${ex===1?"":"s"}</span>
                 ${n?`<span class="moves"><b>${n}</b> ${n===1?"set":"sets"}</span>`:""}`
              : `<span><b>Open</b> log as you go</span>`}
       </div>
+      ${opts.when?`<div class="whenline">${esc(opts.when)}</div>`:""}
       <div class="did">${last
         ? `Last done <b>${fmtLast(dayOf(last.end||last.start))}</b> · <b>${last.sets.length}</b> sets logged`
         : "Not yet logged"}</div>
     </button>`;
-}
-function renderStrength(){
-  const host = $("#strength"); if(!host) return;
-  const wk = programWeek();
-  host.innerHTML = `
-    <p class="col-h">Strength <s>${PROGRAM.block} · week ${wk}${PROGRAM.weeks>1?` of ${PROGRAM.weeks}`:""}</s></p>
-    ${PROGRAM.note?`<p class="prognote">${PROGRAM.note}</p>`:""}
-    <div class="cols">${PROGRAM.workouts.map(w=>`<div>${liftCardHTML(w)}</div>`).join("")}</div>`;
-  host.querySelectorAll("[data-w]").forEach(el=>{ el.onclick=()=>openLift(el.dataset.w); });
 }
 
 /* ---------- session state ----------
@@ -114,11 +117,14 @@ function renderStrength(){
    substitutions made without touching PROGRAM. `entries` is keyed
    "exIndex|setIndex" and is the single source of truth for what is typed —
    the DOM is rebuilt from it on every structural change. */
-let lift = { w:null, ex:[], entries:{}, startedAt:0, rest:null, restEnds:0 };
+let lift = { w:null, sid:null, ex:[], entries:{}, startedAt:0, rest:null, restEnds:0 };
 
-function openLift(id){
+/* `sid` is the scheduled slot this was opened from, so the same workout on two
+   different days ticks off independently. Null when opened from Browse. */
+function openLift(id, sid){
   const w = PROGRAM.workouts.find(x=>x.id===id); if(!w) return;
   lift.w = w;
+  lift.sid = sid || null;
   lift.ex = (w.exercises||[]).map(e=>Object.assign({}, e, {sets:e.sets||3}));
   lift.entries = {};
   lift.startedAt = Date.now();
@@ -273,7 +279,7 @@ function finishLift(){
   if(sets.length || note){
     db.strength = db.strength || { sessions:[] };
     db.strength.sessions.push({
-      w: lift.w.id, wName: lift.w.name, block: PROGRAM.block, week: programWeek(),
+      w: lift.w.id, sid: lift.sid, wName: lift.w.name, block: PROGRAM.block, week: programWeek(),
       start: lift.startedAt, end: Date.now(), note, sets
     });
     saveDB();
@@ -323,4 +329,6 @@ onClick("#btnLiftDone", finishLift);
 onClick("#restSkip", ()=>{ stopRest(); });
 document.addEventListener("visibilitychange", ()=>{ if(document.visibilityState==="visible" && lift.rest) paintRest(); });
 
-renderStrength();
+/* app.js renders Today before this file has loaded, so its workout cards come
+   out empty. Render it once more now that workoutCardHTML exists. */
+if(typeof renderHome === "function") renderHome();

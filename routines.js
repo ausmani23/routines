@@ -5,6 +5,8 @@
    Routine fields:
      id          unique string
      name        display name
+     short       compact name for the one-line daily summary on Upcoming,
+                 where "Morning — hip opener" is four words too many
      accent      per-routine color
      sub         subtitle on home + detail
      variants    optional array of variant names, e.g. ["Day A","Day B"] or
@@ -15,8 +17,14 @@
                  NOT complete last time (for A/B day schemes);
                  "pick" (default) → remembers your last manual choice
      defaultLevel  starting level index for leveled blocks (before any is set)
-     onDemand    true → filed under the "On demand" column on the home screen
-                 instead of the daily column. Omit for daily routines.
+     onDemand    legacy flag, kept as the fallback for `sched`. Omit on new
+                 routines and use `sched` instead.
+     sched       when this routine is due. {freq:"daily"} → it appears on Today
+                 every day and in the one-line daily summary on Upcoming.
+                 {freq:"onDemand"} → it never appears on a schedule; you reach
+                 it from Browse or the "On demand" row at the foot of Today.
+                 Every routine is area "mobility & pt"; the dated strength and
+                 cardio work is scheduled from program.js instead.
      blocks      the exercises, in order
 
    Block fields:
@@ -43,7 +51,7 @@
    ============================================================ */
 const ROUTINES = [
 {
-  id:"hips", name:"Morning — hip opener", accent:"#9BB8D3",
+  id:"hips", name:"Morning — hip opener", short:"Hips", accent:"#9BB8D3", sched:{freq:"daily"},
   sub:"First thing on waking, before you load the spine. Everything here moves — ease in and out of each position, never hang at end range.",
   blocks:[
     {name:"Cat–cow", badge:"req", mode:"time", sec:60, dose:"60 sec · slow, breath-led",
@@ -58,7 +66,7 @@ const ROUTINES = [
   ]
 },
 {
-  id:"core", name:"Core — back-safe", accent:"#5BC9BC",
+  id:"core", name:"Core — back-safe", short:"Core", accent:"#5BC9BC", sched:{freq:"daily"},
   sub:"Daily. The circuit is anti-movement — brace, don't crunch. The 10-min version adds a definition round: slow, controlled flexion for the mirror, skipped on any day the back is talking. Level up one exercise at a time — never the whole circuit.",
   variants:["5 min","10 min"], variantTags:["the circuit","+ definition round"], defaultLevel:0,
   blocks:[
@@ -118,7 +126,7 @@ const ROUTINES = [
   ]
 },
 {
-  id:"mobility", name:"Mobility — A / B", accent:"#B48EAD",
+  id:"mobility", name:"Mobility — A / B", short:"Mobility", accent:"#B48EAD", sched:{freq:"daily"},
   sub:"Once a day, alternating. A is the QL and low back — both sides, evenly. B is hips, groin and the posterior chain that actually keeps the back quiet. Everything moves: ease in and out of each stretch rather than hanging at end range.",
   variants:["Day A — QL & back","Day B — hips & chain"],
   variantTags:["side bends & twists","strength that travels"],
@@ -212,7 +220,7 @@ const ROUTINES = [
   ]
 },
 {
-  id:"tendon", name:"PT — tendon, foot & knee", accent:"#E5A33C",
+  id:"tendon", name:"PT — tendon, foot & knee", short:"PT", accent:"#E5A33C", sched:{freq:"daily"},
   sub:"Daily, alternating A / B. The tendon non-negotiables run on both days; the second half rotates.",
   variants:["Day A — foot","Day B — spring"],
   variantTags:["ankle & arch","knee, groin, pogo"],
@@ -276,7 +284,7 @@ const ROUTINES = [
   ]
 },
 {
-  id:"ql", name:"QL flare — extra dose", accent:"#7FA8C9", onDemand:true,
+  id:"ql", name:"QL flare — extra dose", short:"QL", accent:"#7FA8C9", onDemand:true, sched:{freq:"onDemand"},
   sub:"For when the right QL is actually cranky — the full card, on top of Mobility Day A, up to twice a day. Slow nasal breathing throughout: the QL grips, it doesn't tear.",
   blocks:[
     {group:"1 — Open up", name:"Cat–cow", mode:"time", sec:60, dose:"60 sec · slow, breath-led",
@@ -310,7 +318,7 @@ const ROUTINES = [
   ]
 },
 {
-  id:"warmup", name:"Pre-soccer warm-up", accent:"#8FBF6B", onDemand:true,
+  id:"warmup", name:"Pre-soccer warm-up", short:"Warm-up", accent:"#8FBF6B", onDemand:true, sched:{freq:"onDemand"},
   sub:"Do in full before every game or session. Kayanos + heel lifts, flat ground. Collagen 15 g + vitamin C ~30–45 min before; hydrate.",
   blocks:[
     {group:"1 — Easy jog (build)", name:"Jog — relaxed shuffle", mode:"time", sec:90,

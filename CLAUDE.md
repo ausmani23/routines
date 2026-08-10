@@ -24,8 +24,10 @@ There is no build, lint, or test step. Development is: edit files, open
   Verify what is actually being served (`curl -s <url>/app.js | grep …`) rather
   than re-pushing. A cache-first worker will happily serve a stale page from a
   correct deploy.
-- Test harnesses live in `claude_workspace/tests/` (engine assertions, routine
-  durations + data integrity, responsive layout) — see the README there.
+- Test harnesses live in `claude_workspace/tests/` (engine assertions, schedule +
+  navigation, routine durations + data integrity, responsive layout) — see the
+  README there. `schedule.html` asserts the real `PROGRAM.schedule` is
+  well-formed, so **run it after every re-program**.
 - **Never use `--screenshot` at a narrow `--window-size` to check mobile
   layout.** Headless Chrome lays out at a fixed ~500px regardless, so the image
   is a crop of a wider render and looks exactly like a clipping bug. Render
@@ -41,6 +43,35 @@ There is no build, lint, or test step. Development is: edit files, open
   week's export, and replaced wholesale **per travel window** (an 11-day stay
   with a known gym is the planning unit; "weeks 1–8" is not). Past blocks go in
   `PROGRAM_ARCHIVE` at the bottom. See `feedback/README.md`.
+- `schedule.js` — the scheduling layer: dates, the agenda for a day, completion
+  lookups, and the drag overrides. Pure functions, no DOM. Loads **before**
+  `app.js` and touches `db` only from inside function bodies.
+- `drag.js` — moving a session to another day on Upcoming. Pointer Events, not
+  HTML5 drag-and-drop, which does not fire on iOS touch at all.
+
+### The schedule is data, not prose
+
+`PROGRAM.schedule` is an array of `{sid, date, w}` (or `{sid, date, rest:true}`)
+and is the **only** statement of what happens when — `PROGRAM.note` must not
+re-enumerate the days, or the two will drift on the first re-program. Recurring
+work instead carries `sched:{freq:"daily"|"onDemand"}`: that is every routine in
+`routines.js` plus the morning check-in.
+
+`sid` is stable within a block and is what a drag override and a logged session
+are keyed to, so the same workout on two different days ticks off independently.
+
+Three areas — **mobility & pt** (every routine, plus the check-in), **strength**,
+**cardio** — set by `cat` on a workout; routines are always mobility. They sort in
+that order within a day, which is the order the day actually happens in.
+
+### Three ways in, one screen each
+
+`home` is **Today** (the day's agenda, grouped by area, finished items dimmed and
+sunk to the foot of their group), `upcoming` is the day-by-day list, `browse` is
+everything by area ignoring the calendar. `go()` renders the screen it switches
+to, so there is nothing to keep in sync. Dragging on Upcoming writes
+`db.sched[blockName][sid]` — the app has no backend and cannot edit `program.js`,
+so **a move is an override, not an edit**, and "Reset to programmed" clears them.
 - `lift.js` — the training engine, for lifting **and** running: set-by-set
   logging, previous-session values as placeholders, ad-hoc exercise adding,
   rest timer, and the markdown export. Loads **after** `app.js` and depends on
@@ -62,7 +93,8 @@ existed still parse. Anything reading a stored set back (`fmtLoggedSet`) must
 format from **which keys are present**, because the exercise definition is long
 gone by then.
 - `app.js` — the engine: audio (`toneAt`/`scheduleAhead`/`say`), screen-wake
-  (`keepAwake`), navigation (`go`), rendering (`renderHome`/`renderDetail`),
+  (`keepAwake`), navigation (`go`), rendering
+  (`renderToday`/`renderUpcoming`/`renderBrowse`/`renderDetail`),
   sequence builder (`buildSeq` flattens blocks × sides × sets into `state.seq`),
   run loop (`loadStep`/`advance`/`resync`), and localStorage persistence (`db`:
   sound/voice prefs, per-exercise levels, variant state, completion log).
@@ -99,7 +131,7 @@ strength sessions, routine completions — last 28 days). That export is the inp
 to the Sunday re-program. Don't add a "sync" feature to close this gap without
 asking; the manual hand-off is the design, not an omission.
 
-- `index.html` — six `<section class="screen">` blocks toggled by an `.on`
+- `index.html` — eight `<section class="screen">` blocks toggled by an `.on`
   class; no router.
 - `sw.js` — cache-first service worker with background refresh.
 - Screen state lives in one mutable `state` object; persistent state in one

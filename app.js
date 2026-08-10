@@ -15,7 +15,7 @@ const $ = s => document.querySelector(s);
 const onClick = (sel, fn) => { const el = $(sel); if(el) el.onclick = fn; };
 const PREP = 5;
 let state = { routine:null, variant:0, moves:0, seq:[], i:0, left:0, up:0, total:0, running:false,
-  tick:null, wake:null, endsAt:null, startedAt:0 };
+  tick:null, wake:null, endsAt:null, startedAt:0, screen:"home", from:"home" };
 
 /* ---------- persistence ----------
    One localStorage key.
@@ -24,13 +24,16 @@ let state = { routine:null, variant:0, moves:0, seq:[], i:0, left:0, up:0, total
    levels:   legacy routine-wide level — kept only as a migration fallback.
    variantSel/variantDone: chosen and last-completed variant per routine.
    log: completion timestamps (epoch ms) per routine id.
+   sched: {blockName: {sid: "YYYY-MM-DD"}} — days a session was dragged to on
+          the Upcoming screen. The app has no backend and cannot edit
+          program.js, so a move lives here. See schedule.js.
    notes: [{ts, text}] — free-text feedback, newest last. Written here and read
           out through the export on the Notes screen; nothing else touches them.
    strength: {sessions:[…]} — written by lift.js, see the shape documented there. */
 const DB_KEY = "routines.v1";
 function loadDB(){
   const def = { sound:true, levels:{}, exLevels:{}, variantSel:{}, variantDone:{}, log:{},
-    notes:[], strength:{sessions:[]} };
+    notes:[], strength:{sessions:[]}, sched:{} };
   try{
     const db = Object.assign(def, JSON.parse(localStorage.getItem(DB_KEY)||"{}"));
     if(!Array.isArray(db.notes)) db.notes = [];
@@ -49,7 +52,9 @@ function stats(id){
   if(!ts.length) return null;
   const days=[...new Set(ts.map(dayOf))].sort((a,b)=>b-a);
   let streak=0;
-  const today=dayOf(Date.now());
+  /* nowMs(), not Date.now(): "last done" and "is it done today" have to agree
+     about what day it is, and the schedule layer owns that. */
+  const today=dayOf(nowMs());
   if(days[0]===today || days[0]===today-DAY){
     streak=1;
     for(let i=1;i<days.length;i++){ if(days[i]===days[i-1]-DAY) streak++; else break; }
@@ -57,7 +62,7 @@ function stats(id){
   return { count:ts.length, lastDay:days[0], streak };
 }
 function fmtLast(lastDay){
-  const diff=Math.round((dayOf(Date.now())-lastDay)/DAY);
+  const diff=Math.round((dayOf(nowMs())-lastDay)/DAY);
   return diff===0?"today":diff===1?"yesterday":`${diff} days ago`;
 }
 
@@ -171,16 +176,30 @@ document.addEventListener("visibilitychange",()=>{
   if(document.visibilityState==="visible" && state.running){ keepAwake(true); resync(); }
 });
 
+/* The three list screens. `state.from` remembers which one you opened a routine
+   or workout from, so Back returns there instead of always dumping you on
+   Today — you can work down the Upcoming list without losing your place. */
+const LISTS = ["home","upcoming","browse"];
 function go(id){
+  if(LISTS.includes(state.screen) && !LISTS.includes(id)) state.from = state.screen;
+  state.screen = id;
   document.querySelectorAll(".screen").forEach(s=>s.classList.toggle("on", s.id===id));
   window.scrollTo(0,0);
   if(id!=="run"){ stopTick(); keepAwake(false); clearScheduled(); mediaSession(false); state.running=false; }
   if(id!=="lift" && typeof stopRest==="function") stopRest();
-  // the accent is set per routine/workout; drop it so home returns to the base teal
-  if(id==="home"||id==="notes") document.documentElement.style.removeProperty("--signal");
-  if(id==="home") applySWReload();   // a deploy that landed mid-routine applies here
+  // the accent is set per routine/workout; drop it so a list screen returns to the base teal
+  if(LISTS.includes(id)||id==="notes") document.documentElement.style.removeProperty("--signal");
+  if(id==="home"){ renderToday(); applySWReload(); }  // a deploy that landed mid-routine applies here
+  if(id==="upcoming") renderUpcoming();
+  if(id==="browse") renderBrowse();
+  paintNav();
+}
+function paintNav(){
+  document.querySelectorAll(".nav .nv").forEach(b=>
+    b.setAttribute("aria-pressed", b.dataset.go === state.screen));
 }
 document.addEventListener("click", e=>{ const b=e.target.closest("[data-go]"); if(b) go(b.dataset.go); });
+document.addEventListener("click", e=>{ if(e.target.closest("[data-back]")) go(state.from||"home"); });
 
 function mmss(t){ const m=Math.floor(t/60), s=t%60; return `${m}:${String(s).padStart(2,"0")}`; }
 function fmtMin(t){ return `${Math.round(t/60)} min`; }
@@ -231,30 +250,144 @@ function didHTML(id){
   return `<div class="did">Last done <b>${fmtLast(st.lastDay)}</b> · <b>${st.count}×</b> total` +
     (st.streak>1?` · <span class="streak">${st.streak}-day streak</span>`:"") + `</div>`;
 }
-function cardHTML(r){
+/* `opts.done` dims the card and adds a tick; `opts.when` appends a scheduling
+   line. Both are optional so a plain cardHTML(r) still works. */
+function cardHTML(r, opts){
+  opts = opts || {};
   const v = defaultVariant(r), time = fmtMin(routineSeconds(r,v));
   /* Skip the variant chip when the variant is just named for its length
      (core's "5 min"), so the card doesn't read "5 min · 5 min". */
   const showVariant = r.variants && r.variants[v] !== time;
   return `
-    <button class="card" data-r="${r.id}" style="--accent:${r.accent}">
+    <button class="card${opts.done?" is-done":""}" data-r="${r.id}" style="--accent:${r.accent}">
+      ${opts.done?`<span class="tickmark">✓</span>`:""}
       <h2>${r.name}</h2><div class="sub">${r.sub}</div>
       <div class="meta"><span><b>${time}</b>${optionalSeconds(r,v)?` +${fmtMin(optionalSeconds(r,v))} opt`:""}</span>
       <span class="moves"><b>${activeBlocks(r,v).length}</b> moves</span>
       ${showVariant?`<span><b>${r.variants[v]}</b>${r.variantMode==="alternate"?" next":""}</span>`:""}</div>
+      ${opts.when?`<div class="whenline">${opts.when}</div>`:""}
       ${didHTML(r.id)}
     </button>`;
 }
-function renderHome(){
-  const daily = ROUTINES.filter(r=>!r.onDemand), demand = ROUTINES.filter(r=>r.onDemand);
-  $("#cards").innerHTML = !demand.length ? daily.map(cardHTML).join("") : `
-    <div class="cols">
-      <div><p class="col-h">Daily <s>5× a week is a win</s></p>${daily.map(cardHTML).join("")}</div>
-      <div><p class="col-h">On demand <s>when it's called for</s></p>${demand.map(cardHTML).join("")}</div>
-    </div>`;
-  $("#cards").querySelectorAll("[data-r]").forEach(el=>{ el.onclick=()=>openDetail(el.dataset.r); });
-  if(typeof renderStrength === "function") renderStrength();  // lift.js loads after this file
+/* One agenda item → a card. Workout cards come from lift.js, which loads after
+   this file — the guard is what keeps the test harnesses (which mount a subset)
+   from throwing. */
+function itemCardHTML(it, opts){
+  opts = Object.assign({done: it.done, sid: it.sid}, opts||{});
+  if(it.kind === "routine") return cardHTML(it.r, opts);
+  return typeof workoutCardHTML === "function" ? workoutCardHTML(it.w, opts) : "";
 }
+function wireCards(host){
+  if(!host) return;
+  host.querySelectorAll("[data-r]").forEach(el=>{ el.onclick=()=>openDetail(el.dataset.r); });
+  if(typeof openLift === "function")
+    host.querySelectorAll("[data-w]").forEach(el=>{ el.onclick=()=>openLift(el.dataset.w, el.dataset.sid||null); });
+}
+
+/* ---------- Today ----------
+   Everything due on this date, grouped by area in the order you do it:
+   check-in, then mobility & PT, then whatever the block asks for. Finished
+   items sink to the bottom of their group rather than disappearing, so the
+   screen still reads as a record of the day at 9pm. */
+function renderToday(){
+  const host = $("#cards"); if(!host) return;
+  const k = todayKey(), items = agendaFor(k);
+  const line = $("#dayLine");
+  if(line){
+    const n = blockDay(k), len = blockLength();
+    line.textContent = fmtDayLong(k) + (n ? ` · day ${n} of ${len}` : "");
+  }
+  const groups = AREA_ORDER.map(a=>({a, list:items.filter(i=>i.area===a)})).filter(g=>g.list.length);
+  const trained = items.some(i=>i.area==="strength"||i.area==="cardio");
+  host.innerHTML = groups.map(g=>{
+    const left = g.list.filter(i=>!i.done), done = g.list.filter(i=>i.done);
+    const cap = left.length ? AREAS[g.a].cap : "all done";
+    return `<div class="area"><p class="col-h">${AREAS[g.a].label} <s>${cap}</s></p>
+      ${[...left, ...done].map(it=>itemCardHTML(it)).join("")}</div>`;
+  }).join("") + (trained ? "" : restTodayHTML(k)) + onDemandHTML();
+  wireCards(host);
+}
+function restTodayHTML(k){
+  const nx = nextSlotAfter(k), w = nx && workoutById(nx.w);
+  return `<div class="area"><p class="col-h">Training <s>rest day</s></p>
+    <p class="restline">Nothing programmed today.${w
+      ? ` Next up · <b>${w.name}</b>, ${relDay(nx.date)||fmtDay(nx.date)}.`
+      : ""}</p></div>`;
+}
+function onDemandHTML(){
+  const rs = onDemandRoutines(), ws = unscheduledWorkouts();
+  if(!rs.length && !ws.length) return "";
+  return `<div class="area ondemand"><p class="col-h">On demand <s>when it's called for</s></p>
+    <div class="cols">${rs.map(r=>`<div>${cardHTML(r)}</div>`).join("")}
+    ${ws.map(w=>`<div>${typeof workoutCardHTML==="function"?workoutCardHTML(w):""}</div>`).join("")}</div></div>`;
+}
+/* renderHome is still the name the finish screen and the toggles call. */
+function renderHome(){ renderToday(); paintNav(); }
+
+/* ---------- Upcoming ----------
+   Day by day, today first. The daily work is one grey line per day instead of
+   four repeated cards — the point of this screen is what VARIES. */
+function renderUpcoming(){
+  const host = $("#upDays"); if(!host) return;
+  const blk = $("#upBlock");
+  if(blk) blk.textContent = PROGRAM.block || "";
+  const note = $("#upNote");
+  if(note) note.textContent = PROGRAM.note || "";
+  host.innerHTML = upcomingDays(10).map(d=>{
+    const s = dailySummary(d.key);
+    const names = s.items.map(i=>i.short).join(" · ");
+    return `<div class="day" data-day="${d.key}">
+      <p class="day-h"><b>${d.rel || d.label}</b>
+        <s>${d.rel ? d.label : ""}${d.day?`${d.rel?" · ":""}day ${d.day}`:""}</s></p>
+      <p class="dailyline">${s.left ? "Daily" : "Daily ✓"} · ${names}${s.secs?` <b>${fmtMin(s.secs)}</b>`:""}</p>
+      ${d.items.length
+        ? d.items.map(it=>slotHTML(it)).join("")
+        : `<p class="restline">Rest · dailies only</p>`}
+    </div>`;
+  }).join("");
+  wireCards(host);
+  if(typeof initDrag === "function") initDrag(host);
+}
+function slotHTML(it){
+  return `<div class="slot${it.moved?" moved":""}" data-sid="${it.sid}">
+    ${itemCardHTML(it)}
+    <button class="grip" data-grip="${it.sid}" aria-label="Move ${esc(it.name)} to another day">⠿</button>
+  </div>`;
+}
+
+/* ---------- Browse ----------
+   Every routine and every workout, filed by area, ignoring the calendar. The
+   only screen where nothing is ever hidden. */
+function renderBrowse(){
+  const host = $("#brBody"); if(!host) return;
+  const cnt = $("#brCount");
+  if(cnt) cnt.textContent = `${ROUTINES.length + (PROGRAM.workouts||[]).length} in all`;
+  const secs = [
+    /* The check-in is a workout by machinery but a daily rehab item by nature,
+       so it heads this section rather than getting a group of its own. */
+    { key:"mobility", cap:"daily unless marked on demand",
+      cards: (PROGRAM.workouts||[]).filter(w=>browseArea(areaOf(w))==="mobility").map(w=>({w}))
+               .concat(dailyRoutines().map(r=>({r})), onDemandRoutines().map(r=>({r}))) },
+    { key:"strength", cap: PROGRAM.block || "",
+      cards: (PROGRAM.workouts||[]).filter(w=>areaOf(w)==="strength").map(w=>({w})) },
+    { key:"cardio", cap:"running, cutting and grids",
+      cards: (PROGRAM.workouts||[]).filter(w=>areaOf(w)==="cardio").map(w=>({w})) }
+  ];
+  host.innerHTML = secs.filter(s=>s.cards.length).map(s=>
+    `<div class="area"><p class="col-h">${AREAS[s.key].label} <s>${esc(s.cap)}</s></p>
+      ${s.cards.map(c=>c.r ? cardHTML(c.r, {when: freqOf(c.r)==="daily" ? "Every day" : "On demand"})
+                           : browseWorkoutHTML(c.w)).join("")}</div>`).join("");
+  wireCards(host);
+}
+function browseWorkoutHTML(w){
+  if(typeof workoutCardHTML !== "function") return "";
+  const nx = nextSlotFor(w.id);
+  const when = w.sched && w.sched.freq === "daily" ? "Every day"
+    : nx ? `Next · ${relDay(nx.date) || fmtDay(nx.date)}`
+    : "Not scheduled";
+  return workoutCardHTML(w, {when});
+}
+
 function nowStr(){ $("#clockNow").textContent = new Date().toLocaleTimeString([],{hour:"numeric",minute:"2-digit"}); }
 
 function openDetail(id){
@@ -470,6 +603,7 @@ function paintToggles(){
 }
 onClick("#tgSound", ()=>{ sound=!sound; db.sound=sound; saveDB(); paintToggles();
   if(sound){unlockAudio();ping();} });
+onClick("#upReset", ()=>{ resetSchedule(); renderUpcoming(); });
 
 /* ---------- notes ----------
    A place to think out loud across a week without leaving the app. Nothing

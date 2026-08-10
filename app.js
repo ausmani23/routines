@@ -651,6 +651,11 @@ function exportMD(){
     `# Routines export — ${isoDay(Date.now())}`,
     `Current block: **${PROGRAM.block}**, week ${typeof programWeek==="function"?programWeek():PROGRAM.week}.`,
     ``,
+    /* The calendar as it actually stands. Days he dragged only exist on the
+       device, so without this the re-program would silently re-plan against a
+       schedule he no longer follows. */
+    `## Schedule`,
+    typeof scheduleExportMD==="function" ? scheduleExportMD() : "_unavailable_",
     `## Notes`,
     notes.length ? notes.map(x=>`### ${isoDay(x.ts)}\n${x.text}`).join("\n\n") : `_No notes in the last 28 days._`,
     ``,

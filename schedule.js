@@ -180,6 +180,51 @@ function upcomingDays(min){
   }
   return days;
 }
+/* ---------- export ----------
+   The calendar as it ACTUALLY stands, not a list of diffs: the app cannot
+   write to program.js, so a drag only exists in localStorage, and this block is
+   the only way a move reaches the Sunday re-program. Emitting the effective
+   plan rather than the overrides means the reader never has to apply a diff in
+   their head to work out what really happened.
+
+   Fenced, because the columns are aligned and markdown would otherwise collapse
+   the whitespace. */
+function scheduleExportMD(){
+  const sched = PROGRAM.schedule || [];
+  if(!sched.length) return "_No calendar in this block._\n";
+  const rows = sched.map(s=>{
+    const to = slotDate(s);
+    return { sid:s.sid, from:s.date, to, rest:!!s.rest,
+             w: s.w ? workoutById(s.w) : null, moved: to !== s.date };
+  });
+  /* Both dates, because a move creates a row on the day it landed on AND
+     leaves a hole on the day it left. */
+  const dates = [...new Set(rows.reduce((a,r)=>a.concat([r.from, r.to]), []))].sort();
+  const lines = [];
+  dates.forEach(d=>{
+    const here = rows.filter(r=>r.to===d && r.w);
+    const gone = rows.filter(r=>r.from===d && r.moved && r.w);
+    const rest = rows.some(r=>r.to===d && r.rest);
+    const n = PROGRAM.start ? daysBetween(PROGRAM.start, d)+1 : null;
+    const head = ((n && n>0) ? `Day ${n}` : "").padEnd(7) + fmtDay(d).padEnd(14);
+    const note = gone.length
+      ? `(${gone.map(r=>`${r.w.name} moved to ${fmtDay(r.to)}`).join("; ")})` : "";
+    if(!here.length){
+      lines.push((head + (note ? "— " + note : rest ? "rest" : "—")).trimEnd());
+      return;
+    }
+    /* Only report where something went when the day was left EMPTY. On a swap
+       the receiving day already says "← moved from", and saying it twice reads
+       like two separate moves. */
+    here.forEach((r,i)=>{
+      lines.push(((i ? "".padEnd(21) : head) + r.w.name.padEnd(30) +
+        (workoutDoneOn(r.w.id, r.sid, d) ? "  ✓ done" : "") +
+        (r.moved ? `  ← moved from ${fmtDay(r.from)}` : "")).trimEnd());
+    });
+  });
+  return "```\n" + lines.join("\n") + "\n```\n";
+}
+
 /* The one-line "Daily · hips · core · mobility · PT" summary Upcoming shows in
    place of repeating four cards on every single day. */
 function dailySummary(k){

@@ -9,6 +9,10 @@
      (scheduleAhead), so they fire even if JS is throttled in background.
    ============================================================ */
 const $ = s => document.querySelector(s);
+/* Bind a click only if the element is there. The test harnesses mount a subset
+   of index.html, and a null here would throw at top level and abort the rest
+   of the file — which is a silent, very confusing failure. */
+const onClick = (sel, fn) => { const el = $(sel); if(el) el.onclick = fn; };
 const PREP = 5;
 let state = { routine:null, variant:0, moves:0, seq:[], i:0, left:0, up:0, total:0, running:false,
   tick:null, wake:null, endsAt:null, startedAt:0 };
@@ -19,12 +23,20 @@ let state = { routine:null, variant:0, moves:0, seq:[], i:0, left:0, up:0, total
              blocks like "Dead bug — 2nd round" share one level).
    levels:   legacy routine-wide level — kept only as a migration fallback.
    variantSel/variantDone: chosen and last-completed variant per routine.
-   log: completion timestamps (epoch ms) per routine id. */
+   log: completion timestamps (epoch ms) per routine id.
+   notes: [{ts, text}] — free-text feedback, newest last. Written here and read
+          out through the export on the Notes screen; nothing else touches them.
+   strength: {sessions:[…]} — written by lift.js, see the shape documented there. */
 const DB_KEY = "routines.v1";
 function loadDB(){
-  const def = { sound:true, levels:{}, exLevels:{}, variantSel:{}, variantDone:{}, log:{} };
-  try{ return Object.assign(def, JSON.parse(localStorage.getItem(DB_KEY)||"{}")); }
-  catch(e){ return def; }
+  const def = { sound:true, levels:{}, exLevels:{}, variantSel:{}, variantDone:{}, log:{},
+    notes:[], strength:{sessions:[]} };
+  try{
+    const db = Object.assign(def, JSON.parse(localStorage.getItem(DB_KEY)||"{}"));
+    if(!Array.isArray(db.notes)) db.notes = [];
+    if(!db.strength || !Array.isArray(db.strength.sessions)) db.strength = {sessions:[]};
+    return db;
+  }catch(e){ return def; }
 }
 const db = loadDB();
 function saveDB(){ try{ localStorage.setItem(DB_KEY, JSON.stringify(db)); }catch(e){} }
@@ -163,6 +175,9 @@ function go(id){
   document.querySelectorAll(".screen").forEach(s=>s.classList.toggle("on", s.id===id));
   window.scrollTo(0,0);
   if(id!=="run"){ stopTick(); keepAwake(false); clearScheduled(); mediaSession(false); state.running=false; }
+  if(id!=="lift" && typeof stopRest==="function") stopRest();
+  // the accent is set per routine/workout; drop it so home returns to the base teal
+  if(id==="home"||id==="notes") document.documentElement.style.removeProperty("--signal");
   if(id==="home") applySWReload();   // a deploy that landed mid-routine applies here
 }
 document.addEventListener("click", e=>{ const b=e.target.closest("[data-go]"); if(b) go(b.dataset.go); });
@@ -238,6 +253,7 @@ function renderHome(){
       <div><p class="col-h">On demand <s>when it's called for</s></p>${demand.map(cardHTML).join("")}</div>
     </div>`;
   $("#cards").querySelectorAll("[data-r]").forEach(el=>{ el.onclick=()=>openDetail(el.dataset.r); });
+  if(typeof renderStrength === "function") renderStrength();  // lift.js loads after this file
 }
 function nowStr(){ $("#clockNow").textContent = new Date().toLocaleTimeString([],{hour:"numeric",minute:"2-digit"}); }
 
@@ -397,6 +413,18 @@ function startTick(){
   state.tick=setInterval(()=>{ if(state.running) resync(); },200);
 }
 function stopTick(){ if(state.tick){ clearInterval(state.tick); state.tick=null; } }
+/* One done screen serves both the timed routines and the strength sessions.
+   `again` is the repeat action; omitted (as it is for lifting) the button hides. */
+function showDone(name, sub, streak, again){
+  $("#doneName").textContent = name;
+  $("#doneSub").textContent = sub;
+  $("#doneStreak").textContent = streak || "";
+  const b = $("#btnAgain");
+  b.hidden = !again;
+  b.onclick = again || null;
+  renderHome();
+  go("done");
+}
 function finish(){
   stopTick(); state.running=false; keepAwake(false); clearScheduled();
   ping(760,.14,.25); setTimeout(()=>ping(1010,.22,.25),150);
@@ -405,23 +433,18 @@ function finish(){
   if(r.variants) db.variantDone[id]=state.variant;
   saveDB();
   const st=stats(id);
-  $("#doneName").textContent = r.name;
   let sub = `${state.moves} moves complete.`;
   if(r.variants){
     sub = `${r.variants[state.variant]} — ${sub}`;
     if(r.variantMode==="alternate")
       sub += ` Next time: ${r.variants[(state.variant+1)%r.variants.length]}.`;
   }
-  $("#doneSub").textContent = sub;
-  $("#doneStreak").textContent = st.streak>1 ? `${st.streak}-day streak.` : "Logged for today.";
-  renderHome();
-  go("done");
+  showDone(r.name, sub, st.streak>1 ? `${st.streak}-day streak.` : "Logged for today.", startRoutine);
 }
 
-$("#btnStart").onclick = startRoutine;
-$("#btnAgain").onclick = startRoutine;
-$("#ringwrap").onclick = ()=>{ if(isReps()){ clearScheduled(); ping(700,.1,.2); advance(); } };
-$("#btnPause").onclick = ()=>{
+onClick("#btnStart", startRoutine);
+onClick("#ringwrap", ()=>{ if(isReps()){ clearScheduled(); ping(700,.1,.2); advance(); } });
+onClick("#btnPause", ()=>{
   if(isReps()){ ping(700,.1,.2); advance(); return; }
   state.running=!state.running;
   $("#btnPause").textContent = state.running?"Pause":"Resume";
@@ -433,20 +456,111 @@ $("#btnPause").onclick = ()=>{
   }else{
     clearScheduled();
   }
-};
-$("#btnNext").onclick = ()=>{ clearScheduled(); advance(); };
-$("#btnPrev").onclick = ()=>{
+});
+onClick("#btnNext", ()=>{ clearScheduled(); advance(); });
+onClick("#btnPrev", ()=>{
   clearScheduled();
   if(!isReps() && state.left < state.seq[state.i].sec - 2) loadStep(state.i);
   else if(state.i>0) loadStep(state.i-1);
   else loadStep(0);
-};
+});
 function paintToggles(){
-  const s=$("#tgSound");
+  const s=$("#tgSound"); if(!s) return;
   s.setAttribute("aria-pressed",sound); s.textContent = sound?"Beeps on":"Beeps off";
 }
-$("#tgSound").onclick = ()=>{ sound=!sound; db.sound=sound; saveDB(); paintToggles();
-  if(sound){unlockAudio();ping();} };
+onClick("#tgSound", ()=>{ sound=!sound; db.sound=sound; saveDB(); paintToggles();
+  if(sound){unlockAudio();ping();} });
+
+/* ---------- notes ----------
+   A place to think out loud across a week without leaving the app. Nothing
+   reads these at runtime; they exist to be exported and handed over when the
+   program gets rewritten. The app is a static page on GitHub Pages with no
+   backend, so it cannot write into the repo itself — export is the bridge. */
+const esc = s => String(s).replace(/[&<>"]/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
+const isoDay = ts => new Date(ts - new Date(ts).getTimezoneOffset()*6e4).toISOString().slice(0,10);
+
+function renderNotes(){
+  const list = $("#nList"), n = db.notes;
+  $("#nCount").textContent = n.length ? `${n.length} note${n.length>1?"s":""}` : "none yet";
+  list.innerHTML = !n.length
+    ? `<p class="hint" style="border:0">Nothing yet. Jot down anything you want the next re-program to
+       take into account — what felt easy, what hurt, what you skipped and why, how the week went.</p>`
+    : n.slice().reverse().map(x=>`
+        <div class="note">
+          <div class="note-h"><span>${isoDay(x.ts)} · ${new Date(x.ts).toLocaleTimeString([],{hour:"numeric",minute:"2-digit"})}</span>
+            <button class="exdel" data-note="${x.ts}" aria-label="Delete note">✕</button></div>
+          <div class="note-b">${esc(x.text).replace(/\n/g,"<br>")}</div>
+        </div>`).join("");
+  list.querySelectorAll("[data-note]").forEach(el=>{ el.onclick=()=>{
+    const ts = +el.dataset.note;
+    db.notes = db.notes.filter(x=>x.ts!==ts); saveDB(); renderNotes(); }; });
+}
+function addNote(){
+  const el = $("#nText"), text = el.value.trim();
+  if(!text) return;
+  db.notes.push({ ts:Date.now(), text });
+  el.value = ""; db.noteDraft = ""; saveDB(); renderNotes();
+  ping(880,.08,.16);
+}
+
+/* The whole week in one paste: notes, lifting, and what actually got done. */
+function exportMD(){
+  const cut = Date.now() - 28*DAY;
+  const notes = db.notes.filter(x=>x.ts>=cut);
+  const done = ROUTINES.map(r=>{
+    const st = stats(r.id); if(!st) return null;
+    const recent = (db.log[r.id]||[]).filter(t=>t>=cut).length;
+    return `- **${r.name}** — ${recent}× in the last 28 days · last ${fmtLast(st.lastDay)}` +
+      (st.streak>1?` · ${st.streak}-day streak`:"");
+  }).filter(Boolean);
+  return [
+    `# Routines export — ${isoDay(Date.now())}`,
+    `Current block: **${PROGRAM.block}**, week ${typeof programWeek==="function"?programWeek():PROGRAM.week}.`,
+    ``,
+    `## Notes`,
+    notes.length ? notes.map(x=>`### ${isoDay(x.ts)}\n${x.text}`).join("\n\n") : `_No notes in the last 28 days._`,
+    ``,
+    `## Strength sessions`,
+    typeof strengthExportMD==="function" ? strengthExportMD(28) : "_unavailable_",
+    `## Routine completions`,
+    done.length ? done.join("\n") : `_Nothing logged._`,
+    ``
+  ].join("\n");
+}
+function flash(msg){
+  const el = $("#nFlash"); el.textContent = msg;
+  clearTimeout(flash.t); flash.t = setTimeout(()=>{ el.textContent=""; }, 2600);
+}
+async function copyExport(){
+  const md = exportMD();
+  try{
+    await navigator.clipboard.writeText(md);
+    flash("Copied — paste it into the Sunday chat.");
+  }catch(e){
+    /* clipboard API needs https + a user gesture; fall back to selecting the
+       text so a long-press copy still works. */
+    const ta = $("#nText"); ta.value = md; ta.select();
+    flash("Couldn't copy automatically — it's in the box above, select and copy.");
+  }
+}
+function downloadExport(){
+  try{
+    const url = URL.createObjectURL(new Blob([exportMD()],{type:"text/markdown"}));
+    const a = document.createElement("a");
+    a.href = url; a.download = `routines-export-${isoDay(Date.now())}.md`;
+    document.body.appendChild(a); a.click(); a.remove();
+    setTimeout(()=>URL.revokeObjectURL(url), 4000);
+    flash("Downloaded — drop it in the repo's feedback/ folder.");
+  }catch(e){ flash("Download failed — use Copy instead."); }
+}
+onClick("#nAdd", addNote);
+onClick("#nCopy", copyExport);
+onClick("#nDl", downloadExport);
+if($("#nText")) $("#nText").oninput = ()=>{ db.noteDraft = $("#nText").value; saveDB(); };
+document.addEventListener("click", e=>{
+  if(e.target.closest('[data-go="notes"]') && $("#nText")){
+    $("#nText").value = db.noteDraft||""; renderNotes(); }
+});
 
 /* offline: cache-first service worker (only meaningful over https)
    The worker serves cached files, so after a deploy the page in front of you is

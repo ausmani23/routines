@@ -34,8 +34,16 @@ There is no build, lint, or test step. Development is: edit files, open
 ## Architecture
 
 - `routines.js` — the `ROUTINES` data array; the only file that changes for
-  content edits. Schema documented in its header comment. New routines are
+  rehab-content edits. Schema documented in its header comment. New routines are
   appended objects; the engine needs no changes.
+- `program.js` — the `PROGRAM` object: the current strength block. Unlike
+  `routines.js` this is **meant to churn** — it gets rewritten every Sunday from
+  the week's export, and replaced wholesale every 6–8 weeks. Past blocks go in
+  `PROGRAM_ARCHIVE` at the bottom of the file. See `feedback/README.md`.
+- `lift.js` — the strength engine: set-by-set logging (weight / reps / RPE),
+  previous-session values as placeholders, ad-hoc exercise adding, rest timer,
+  and the markdown export. Loads **after** `app.js` and depends on `db`,
+  `saveDB`, `go`, `ping`, `mmss`, `$`, `onClick` from it.
 - `app.js` — the engine: audio (`toneAt`/`scheduleAhead`/`say`), screen-wake
   (`keepAwake`), navigation (`go`), rendering (`renderHome`/`renderDetail`),
   sequence builder (`buildSeq` flattens blocks × sides × sets into `state.seq`),
@@ -65,7 +73,16 @@ Sessions target ≤10 min. `routineSeconds()` counts only required blocks;
 `optionalSeconds()` counts `badge:"opt"` ones, shown separately as "+N min opt".
 When adding content, check the totals — `claude_workspace/` has the
 duration-check harness.
-- `index.html` — four `<section class="screen">` blocks toggled by an `.on`
+### Notes and the weekly export
+
+There is no backend, so the app cannot write into this repo. Notes and strength
+logs live in `localStorage` and leave the device only through **Notes & export →
+Copy everything / Download .md**, which emits one markdown document (notes,
+strength sessions, routine completions — last 28 days). That export is the input
+to the Sunday re-program. Don't add a "sync" feature to close this gap without
+asking; the manual hand-off is the design, not an omission.
+
+- `index.html` — six `<section class="screen">` blocks toggled by an `.on`
   class; no router.
 - `sw.js` — cache-first service worker with background refresh.
 - Screen state lives in one mutable `state` object; persistent state in one
@@ -82,4 +99,15 @@ duration-check harness.
   iOS produces no audio otherwise.
 - **Content is rehab guidance transcribed from the owner's real cards** —
   exercise text, doses, and cues (e.g. "skip on a RED morning") are
-  authoritative. Never paraphrase or "improve" them without asking.
+  authoritative. Never paraphrase or "improve" them without asking. This applies
+  to `routines.js`, not `program.js` — the strength block is ours to rewrite.
+- **Never use `done` as a bare CSS state class.** `.done` styles the finish
+  screen; when it was unscoped it also matched `.bead.done` on the run screen and
+  grew the 3px progress strip to 16vh as soon as one segment completed. Those
+  rules are now scoped to `#done`, and `lift.js` marks logged sets `.logged`
+  rather than `.done`. There is a geometry assertion for this in `lift.html`.
+- **Top-level DOM bindings must tolerate a missing element.** Use the `onClick`
+  helper, not `$("#x").onclick = …`. The test harnesses mount a subset of
+  `index.html`, and a `null` here throws during script evaluation, aborting the
+  rest of the file — which surfaces as a baffling "cannot access X before
+  initialization" from a completely unrelated line.

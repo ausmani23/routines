@@ -5,3 +5,9 @@
 routines.html
 
 claude_workspace/
+
+# Exported notes and training logs. This repo is PUBLIC (it serves the Pages
+# site), and the exports are free-text health notes — they stay on disk. Only
+# the README describing the workflow is tracked.
+feedback/*
+!feedback/README.md

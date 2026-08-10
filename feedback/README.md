@@ -1,0 +1,59 @@
+# Feedback — the weekly loop
+
+This folder is where the app's data comes to rest so it can be programmed
+against. **The app cannot write here.** It is a static page served from GitHub
+Pages with no backend, so everything it records lives in `localStorage` on the
+device that recorded it. Export is the bridge, and it is manual on purpose —
+one button, once a week.
+
+## What the app stores
+
+| What | Where it's written | Where it shows up |
+| --- | --- | --- |
+| Free-text notes | Notes & export screen, or "Add a note" after a routine | `## Notes` in the export |
+| Strength sets — weight, reps, RPE | The lift screens, set by set | `## Strength sessions` |
+| Session notes | The box at the bottom of a lift session | Quoted under that session |
+| Routine completions | Automatic, on finishing a routine | `## Routine completions` |
+
+## Sunday — the weekly re-program
+
+1. On the phone: **Notes & export → Copy everything**. That produces one
+   markdown document covering the last 28 days.
+2. Paste it into a conversation with Claude, or save it here as
+   `export-YYYY-MM-DD.md` and point at the file.
+3. Claude reads it and rewrites `program.js` for the coming week — usually load
+   and rep changes, sometimes swapping an exercise that isn't working.
+4. Commit and push **`program.js`**. The phone picks the new program up on next
+   open. (Bump `CACHE` in `sw.js` or the service worker will keep serving the
+   old program from cache.)
+
+> **This repo is public** — it has to be, to serve the Pages site. Everything in
+> this folder except this README is gitignored, and it must stay that way: the
+> exports are free-text notes about your body. Keep them local; they are for
+> reading into a conversation, not for publishing.
+
+The **Download .md** button is the alternative to Copy: it saves the same
+document to the device, which is the better path if the export is long or you
+want it committed here verbatim.
+
+## Every 6–8 weeks — a new block
+
+When a block runs out, the conversation is a wider one: what the next couple of
+months actually look like. Travel, gym access or the lack of it, whether soccer
+is happening, how the Achilles and the back have been trending. The output is a
+fresh `PROGRAM` with a new `block` name and `start` date, and the old block's
+summary appended to `PROGRAM_ARCHIVE` at the bottom of `program.js` so it
+doesn't vanish when the file is overwritten.
+
+Standing constraints that survive every block are in
+`claude_workspace/INJURY_CONTEXT.md` — read it before programming anything.
+Load management, the 90°-ankle rule, and "pain is not productive" come from
+Carolyn and outrank any programming logic.
+
+## Housekeeping
+
+Nothing in the app prunes itself. The export covers a 28-day window, but
+`localStorage` keeps everything, so the phone is the real archive until an
+export lands here. If a device is ever wiped or the PWA reinstalled, that
+history is gone — which is the actual reason to drop an export in this folder
+each week rather than only pasting it into a chat.

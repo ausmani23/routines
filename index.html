@@ -18,8 +18,10 @@
 <section id="home" class="screen on"><div class="wrap">
   <div class="masthead"><h1>Routines</h1><span id="clockNow"></span></div>
   <div id="cards"></div>
+  <div id="strength"></div>
   <div class="toggles">
     <button class="tg" id="tgSound" aria-pressed="true">Beeps on</button>
+    <button class="tg" data-go="notes">Notes &amp; export</button>
   </div>
   <p class="hint" id="hint">Timed moves count down and advance on their own. Rep-based moves wait
   for you — tap the dial when you finish the set.</p>
@@ -65,16 +67,50 @@
     style="position:fixed;width:2px;height:2px;opacity:.01;pointer-events:none;bottom:0;left:0"></video>
 </div></section>
 
+<section id="lift" class="screen"><div class="wrap">
+  <button class="back" data-go="home">← Home</button>
+  <h2 class="detail-h" id="lName"></h2>
+  <p class="detail-sub" id="lSub"></p>
+  <div id="lBody"></div>
+  <div class="lift-note">
+    <p class="label">Session note</p>
+    <textarea id="lNote" rows="2" placeholder="How it went, what to change next week…"></textarea>
+  </div>
+  <div class="start"><button id="btnLiftDone">Finish &amp; log</button></div>
+  <div class="rest" id="rest" hidden>
+    <span>Rest</span><b id="restT">0:00</b><button id="restSkip">Skip</button>
+  </div>
+</div></section>
+
+<section id="notes" class="screen"><div class="wrap">
+  <button class="back" data-go="home">← Home</button>
+  <h2 class="detail-h">Notes &amp; export</h2>
+  <p class="detail-sub">Anything the next re-program should take into account. Kept on this device
+  until you export — the app has no server, so Sunday's hand-off is the Copy button.</p>
+  <textarea id="nText" rows="4" placeholder="What felt easy, what hurt, what you skipped and why…"></textarea>
+  <button class="wide" id="nAdd">Save note</button>
+  <p class="label" style="margin-top:26px">For Sunday <span class="cnt" id="nCount"></span></p>
+  <div class="nrow">
+    <button id="nCopy">Copy everything</button>
+    <button id="nDl">Download .md</button>
+  </div>
+  <p class="flash" id="nFlash"></p>
+  <div id="nList"></div>
+</div></section>
+
 <section id="done" class="screen"><div class="wrap"><div class="done">
   <div class="tick">✓</div>
   <h2 id="doneName">Done</h2>
   <p id="doneSub"></p>
   <p class="streakline" id="doneStreak"></p>
   <button class="again" id="btnAgain">Run again</button>
+  <button class="again" data-go="notes">Add a note</button>
   <button class="again" data-go="home">All routines</button>
 </div></div></section>
 
 <script src="routines.js"></script>
+<script src="program.js"></script>
 <script src="app.js"></script>
+<script src="lift.js"></script>
 </body>
 </html>

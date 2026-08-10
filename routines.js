@@ -52,16 +52,9 @@ const ROUTINES = [
     {name:"Dynamic supine twist", mode:"time", sec:45, sides:2, dose:"45 sec each side, moving",
      detail:"On your back, arms out in a T, knees bent, feet flat. Let both knees fall slowly toward the floor on one side while your head turns the other way. Pause one breath at the bottom, then draw the knees back up to center. Repeat for the whole 45 seconds — a slow pendulum, not a held stretch.",
      cue:"Rotation is the range the night takes away first. Moving in and out of it — rather than parking there — is what teaches the back it's safe."},
-    {name:"Half-kneeling lunge", badge:"req", mode:"time", sec:45, sides:2, sets:2, dose:"45 sec each side × 2, rocking",
+    {name:"Half-kneeling lunge", badge:"req", mode:"time", sec:45, sides:2, sets:3, dose:"45 sec each side × 3, rocking",
      detail:"Kneel on one knee (pad it if you like), front foot flat, torso tall. FIRST tuck the pelvis under — think belt buckle up toward the ribs — and squeeze the glute on the kneeling side. Keeping that, rock gently forward for 2–3 seconds until the front of the kneeling-side hip lengthens, then rock back. Repeat, breathing out on each rock forward.",
-     cue:"Your favorite for a reason — it hits exactly where the night leaves you tight. The glute squeeze is what makes it work: without it you arch the low back instead of lengthening the psoas. Two rounds a side because more of a good thing is the whole point of the morning."},
-    {name:"Couch stretch", badge:"opt", mode:"time", sec:45, sides:2, dose:"45 sec each side",
-     detail:"Same half-kneeling shape, but the rear foot rides up against a wall or the sofa, bending the knee fully. Torso tall, pelvis tucked, same gentle rock forward and back. Back off until it's a stretch, not a fight.",
-     cue:"The deeper version — it adds the quad to the hip flexor. Optional if the half-kneeling round already gets there. Skip on days it feels sharp."},
-    {name:"Standing hip extension", mode:"reps", target:"10 per side", sides:2, est:35,
-     dose:"10 per side, slow",
-     detail:"Stand tall, one hand on a wall or counter for balance. Squeeze the glute and drive one leg straight back behind you a few inches — leg stays straight, torso stays upright, low back does NOT arch. Two seconds back, two seconds return. That small, strict range is correct; if it feels big, you're arching.",
-     cue:"The active bookend: the lunge opened the front of the hip, this makes your own muscle hold the new range. That's what makes it stick past the first ten minutes."}
+     cue:"Your favorite for a reason — it hits exactly where the night leaves you tight. The glute squeeze is what makes it work: without it you arch the low back instead of lengthening the psoas. Three rounds a side now: the routine is down to what actually earns its place, so this gets the time back."}
   ]
 },
 {

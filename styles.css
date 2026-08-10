@@ -174,13 +174,18 @@ button{font:inherit;color:inherit;background:none;border:none;cursor:pointer}
 .lift-head .nm{font-weight:700;font-size:16px;letter-spacing:-.01em}
 .exdel{color:var(--dimmer);font-size:14px;padding:2px 6px;line-height:1}
 .histline{color:var(--dimmer);font-size:11px;margin-top:4px}
-.sethead,.setrow{display:grid;grid-template-columns:24px minmax(58px,1fr) 1fr 1fr 52px 40px;
-  gap:6px;align-items:center}
-.sethead{margin-top:10px;font-size:9.5px;letter-spacing:.12em;color:var(--dimmer);text-transform:uppercase}
+/* --nf is the number of declared fields (2 or 3), set inline per row, so a
+   running interval (dist/time/rpe) and an isometric hold (time/rpe) lay out
+   from the same rule. */
+.sethead,.setrow{display:grid;
+  grid-template-columns:22px minmax(58px,1.2fr) repeat(var(--nf,3),minmax(0,1fr)) 38px;
+  gap:5px;align-items:center}
+.sethead{margin-top:10px;font-size:9.5px;letter-spacing:.1em;color:var(--dimmer);
+  text-transform:uppercase;white-space:nowrap;overflow:hidden}
 .setrow{margin-top:6px}
 .setrow .sn{font-size:13px;color:var(--dim);font-variant-numeric:tabular-nums}
-.setrow .prev{font-size:11.5px;color:var(--dimmer);font-variant-numeric:tabular-nums;
-  white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.setrow .prev{font-size:10.5px;color:var(--dimmer);font-variant-numeric:tabular-nums;
+  letter-spacing:-.01em;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .fld{width:100%;min-width:0;background:var(--panel);border:1px solid var(--line);border-radius:9px;
   color:var(--bone);font:inherit;font-size:15px;font-variant-numeric:tabular-nums;
   padding:9px 8px;text-align:center;-webkit-appearance:none}

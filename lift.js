@@ -12,10 +12,49 @@
 /* ---------- shape of the stored log ----------
    db.strength.sessions: newest last.
      { w, block, week, start, end, note,
-       sets:[{ex, n, weight, reps, rpe}] }
+       sets:[{ex, n, weight, reps, distance, duration, rpe}] }
    `ex` is the exercise name and `n` the set number, so history survives a
-   workout being reordered or renamed. */
+   workout being reordered or renamed.
+
+   Every key is optional — a set records only the fields its exercise declares
+   (see FIELDS below), so a barbell set and a running interval share one shape.
+   That shape deliberately mirrors Hevy's CSV columns (weight_lbs, reps,
+   distance_miles, duration_seconds, rpe), which keeps import/export honest.
+   Sessions logged before distance/duration existed simply lack those keys. */
 function sessions(){ return (db.strength && db.strength.sessions) || []; }
+
+/* ---------- what a set can record ----------
+   An exercise declares `fields`; omitted means lifting. `labels` re-heads a
+   column without inventing a new field type (the daily check-in uses it to
+   show MINUTES / PAIN over duration / rpe). */
+const FIELDS = {
+  weight:   { label:"WEIGHT", ph:"wt",   mode:"decimal" },
+  reps:     { label:"REPS",   ph:"reps", mode:"numeric" },
+  distance: { label:"DIST",   ph:"m",    mode:"decimal" },
+  duration: { label:"TIME",   ph:"m:ss", mode:"text"    },
+  rpe:      { label:"RPE",    ph:"rpe",  mode:"decimal" }
+};
+const LIFT_FIELDS = ["weight","reps","rpe"];
+function exFields(e){ return (e && e.fields) || LIFT_FIELDS; }
+function fieldLabel(e,k){ return (e.labels && e.labels[k]) || FIELDS[k].label; }
+function fieldPh(e,k){ return (e.phs && e.phs[k]) || FIELDS[k].ph; }
+
+/* One previous set, rendered for the PREV column. Weight+reps get the familiar
+   "225×8" treatment; everything else is joined plainly. */
+function fmtPrev(e, p){
+  if(!p) return "—";
+  const f = exFields(e), out = [];
+  if(f.includes("weight") && f.includes("reps")) out.push(`${p.weight||"bw"}×${p.reps||"—"}`);
+  else if(f.includes("weight") && p.weight) out.push(p.weight);
+  else if(f.includes("reps") && p.reps) out.push(p.reps);
+  if(f.includes("distance") && p.distance) out.push(`${p.distance}m`);
+  if(f.includes("duration") && p.duration) out.push(p.duration);
+  /* "/" not " · ": this column is ~70px on a phone and a run needs to fit
+     distance, time and RPE in it without ellipsing. */
+  let s = out.join("/") || "—";
+  if(f.includes("rpe") && p.rpe) s += ` @${p.rpe}`;
+  return s;
+}
 
 /* Most recent session of this workout — for the card's "last done" line. */
 function lastSession(wid){
@@ -46,11 +85,12 @@ function workingSets(w){ return w.exercises.reduce((a,e)=>a+(e.warmup?0:(e.sets|
 function liftCardHTML(w){
   const last = lastSession(w.id);
   const n = workingSets(w), ex = w.exercises.length;
+  const unit = w.unit || "lift";   // "drill" on conditioning days, "check" on the check-in
   return `
     <button class="card" data-w="${w.id}" style="--accent:${w.accent||'#C97F5B'}">
       <h2>${w.name}</h2><div class="sub">${w.sub||""}</div>
       <div class="meta">
-        ${ex ? `<span><b>${ex}</b> ${ex===1?"lift":"lifts"}</span>
+        ${ex ? `<span><b>${ex}</b> ${unit}${ex===1?"":"s"}</span>
                 ${n?`<span class="moves"><b>${n}</b> ${n===1?"set":"sets"}</span>`:""}`
              : `<span><b>Open</b> log as you go</span>`}
       </div>
@@ -96,33 +136,36 @@ function entry(e,s){ return lift.entries[`${e}|${s}`] || (lift.entries[`${e}|${s
 function renderLift(){
   $("#lBody").innerHTML = lift.ex.map((e,ei)=>{
     const hist = lastSetsFor(e.name);
-    const target = [e.reps?`${e.reps} reps`:"", e.rpe?`RPE ${e.rpe}`:"", e.load||""]
+    const f = exFields(e);
+    /* `target` overrides the composed line — a run's prescription ("2 min @
+       RPE 7") doesn't decompose into reps/rpe/load the way a lift's does. */
+    const target = e.target || [e.reps?`${e.reps} reps`:"", e.rpe?`RPE ${e.rpe}`:"", e.load||""]
       .filter(Boolean).join(" · ");
     const rows = Array.from({length:e.sets}, (_,si)=>{
       const en = entry(ei,si), p = setAt(hist, si+1);
-      const ph = k => p && p[k] != null && p[k] !== "" ? p[k] : "";
-      return `<div class="setrow${en.done?" logged":""}">
+      const inputs = f.map(k=>{
+        const meta = FIELDS[k], ph = (p && p[k]) || fieldPh(e,k);
+        return `<input class="fld" data-e="${ei}" data-s="${si}" data-k="${k}"
+          inputmode="${meta.mode}" placeholder="${esc(ph)}" value="${esc(en[k]||"")}"
+          aria-label="${esc(fieldLabel(e,k))}, set ${si+1}">`;
+      }).join("");
+      return `<div class="setrow${en.done?" logged":""}" style="--nf:${f.length}">
         <div class="sn">${si+1}</div>
-        <div class="prev">${p?`${p.weight||"—"}×${p.reps||"—"}${p.rpe?` @${p.rpe}`:""}`:"—"}</div>
-        <input class="fld" data-e="${ei}" data-s="${si}" data-k="weight" inputmode="decimal"
-          placeholder="${ph("weight")||"wt"}" value="${en.weight||""}" aria-label="Weight, set ${si+1}">
-        <input class="fld" data-e="${ei}" data-s="${si}" data-k="reps" inputmode="numeric"
-          placeholder="${ph("reps")||"reps"}" value="${en.reps||""}" aria-label="Reps, set ${si+1}">
-        <input class="fld rpe" data-e="${ei}" data-s="${si}" data-k="rpe" inputmode="decimal"
-          placeholder="${ph("rpe")||"rpe"}" value="${en.rpe||""}" aria-label="RPE, set ${si+1}">
+        <div class="prev">${esc(fmtPrev(e,p))}</div>
+        ${inputs}
         <button class="tick-set" data-done="${ei}|${si}" aria-pressed="${!!en.done}">✓</button>
       </div>`;
     }).join("");
     return `<div class="lift-ex">
       <div class="lift-head">
-        <div class="nm">${e.name}${e.warmup?` <span class="badge opt">warm-up</span>`:""}</div>
-        ${e.added?`<button class="exdel" data-del="${ei}" aria-label="Remove ${e.name}">✕</button>`:""}
+        <div class="nm">${esc(e.name)}${e.warmup?` <span class="badge opt">warm-up</span>`:""}</div>
+        ${e.added?`<button class="exdel" data-del="${ei}" aria-label="Remove ${esc(e.name)}">✕</button>`:""}
       </div>
-      ${target?`<div class="dose">${target}</div>`:""}
-      ${e.note?`<div class="cue">${e.note}</div>`:""}
+      ${target?`<div class="dose">${esc(target)}</div>`:""}
+      ${e.note?`<div class="cue">${esc(e.note)}</div>`:""}
       ${hist?`<div class="histline">Last time · ${fmtLast(dayOf(hist.when))}</div>`:""}
-      <div class="sethead"><div class="sn">SET</div><div class="prev">PREV</div>
-        <div>WEIGHT</div><div>REPS</div><div class="rpe">RPE</div><div></div></div>
+      <div class="sethead" style="--nf:${f.length}"><div class="sn">SET</div><div class="prev">PREV</div>
+        ${f.map(k=>`<div>${esc(fieldLabel(e,k))}</div>`).join("")}<div></div></div>
       ${rows}
       <button class="addset" data-add="${ei}">+ set</button>
     </div>`;
@@ -153,10 +196,10 @@ function renderLift(){
 /* Ticking a set is also the "same as last time" shortcut: anything still blank
    inherits the previous session's number, so a maintenance set is one tap. */
 function toggleSet(ei,si){
-  const en = entry(ei,si);
+  const e = lift.ex[ei], en = entry(ei,si);
   if(en.done){ en.done = false; renderLift(); return; }
-  const p = setAt(lastSetsFor(lift.ex[ei].name), si+1);
-  if(p){ ["weight","reps","rpe"].forEach(k=>{ if(!en[k] && p[k]) en[k] = p[k]; }); }
+  const p = setAt(lastSetsFor(e.name), si+1);
+  if(p){ exFields(e).forEach(k=>{ if(!en[k] && p[k]) en[k] = p[k]; }); }
   en.done = true;
   renderLift();
   ping(760,.09,.18);
@@ -212,10 +255,13 @@ function stopRest(){
 function loggedSets(){
   const out = [];
   lift.ex.forEach((e,ei)=>{
+    const f = exFields(e);
     for(let si=0; si<e.sets; si++){
       const en = lift.entries[`${ei}|${si}`];
-      if(!en || (!en.weight && !en.reps && !en.rpe)) continue;
-      out.push({ ex:e.name, n:si+1, weight:en.weight||"", reps:en.reps||"", rpe:en.rpe||"" });
+      if(!en || !f.some(k=>en[k])) continue;
+      const rec = { ex:e.name, n:si+1 };
+      f.forEach(k=>{ rec[k] = en[k]||""; });
+      out.push(rec);
     }
   });
   return out;
@@ -240,7 +286,20 @@ function finishLift(){
 
 /* ---------- export ----------
    Markdown rather than JSON: it is what actually gets pasted into a
-   conversation on Sunday, and it stays readable in the repo afterwards. */
+   conversation on Sunday, and it stays readable in the repo afterwards.
+
+   A stored set carries only the keys its exercise declared, and the exercise
+   definition is long gone by export time — so format from what is actually
+   present rather than from a assumed shape. "1200 m in 4:26 @8", "225×8 @7",
+   "45s". */
+function fmtLoggedSet(x){
+  const has = k => x[k] != null && x[k] !== "";
+  const out = [];
+  if(has("weight") || has("reps")) out.push(`${x.weight||"bw"}×${has("reps")?x.reps:"?"}`);
+  if(has("distance")) out.push(`${x.distance} m`);
+  if(has("duration")) out.push(has("distance") ? `in ${x.duration}` : x.duration);
+  return (out.join(" ") || "—") + (has("rpe") ? ` @${x.rpe}` : "");
+}
 function strengthExportMD(sinceDays){
   const cut = sinceDays ? Date.now() - sinceDays*DAY : 0;
   const ss = sessions().filter(s=>(s.end||s.start) >= cut);
@@ -255,7 +314,7 @@ function strengthExportMD(sinceDays){
       g.sets.push(x);
     });
     const body = byEx.map(g=>`- **${g.ex}** — ` +
-      g.sets.map(x=>`${x.weight||"bw"}×${x.reps||"?"}${x.rpe?` @${x.rpe}`:""}`).join(", ")).join("\n");
+      g.sets.map(fmtLoggedSet).join(", ")).join("\n");
     return head + "\n" + body + (s.note?`\n\n> ${s.note}`:"");
   }).join("\n\n") + "\n";
 }

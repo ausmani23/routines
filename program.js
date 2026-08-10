@@ -1,82 +1,266 @@
 /* ============================================================
-   STRENGTH PROGRAM — the file that gets rewritten every Sunday.
+   STRENGTH PROGRAM — the file that gets rewritten every block.
 
    The routines in routines.js are stable rehab content. This is the
-   opposite: it is meant to churn. The weekly loop is
+   opposite: it is meant to churn. The loop is
 
-     you lift  →  the app logs sets/reps/weight/RPE  →  Sunday you export
-     →  Claude reads the export and rewrites this file for the coming week
-     →  every 6–8 weeks the whole block gets replanned around your life.
+     you train  →  the app logs sets/reps/weight/RPE/distance/time  →  you
+     export from the Notes screen  →  Claude reads it and rewrites this file
+     →  a new block whenever you land somewhere new.
+
+   Blocks are scoped to TRAVEL WINDOWS, not to a fixed number of weeks — an
+   11-day stay with a known gym is a real planning unit; "weeks 1-8" is not.
 
    Keep the ARCHIVE at the bottom: it is the only place past blocks survive
-   once this file is overwritten, and it is what makes "what did we do last
-   time we were in a hotel for two weeks" answerable.
+   once this file is overwritten.
 
    PROGRAM fields:
-     block     name of the current training block
-     week      which week of the block this file is programming
+     block     name of the current block
+     week      which week of the block this file programs
      weeks     how many weeks the block runs
      start     ISO date the block began (drives the week counter on home)
      focus     one line: what this block is trying to buy
-     note      anything the app should show you before you start
-     workouts  the sessions, in the order they should be done
+     note      shown on the home screen above the workout cards
+     mas       maximal aerobic speed, in m/s, used to compute interval
+               distances. ALWAYS record `source` — "assumed" vs "tested" —
+               so a guess is never later mistaken for a measurement.
+     workouts  the sessions
 
    Workout fields:
-     id        unique, stable — the log is keyed to it, so don't rename
-               an id when you change the contents of a day
-     name      display name
-     accent    card colour
-     sub       one line shown on the card and at the top of the session
+     id        unique and STABLE — the log is keyed to it, so never rename an
+               id when you change a day's contents
+     name, accent, sub
+     unit      what one exercise is called on the card — "lift" (default),
+               "drill" on conditioning days, "check" on the check-in
      freeform  true → starts empty, you add exercises as you go
      exercises the movements, in order
 
    Exercise fields:
-     name      display name — also the key the log matches on across weeks,
-               so "Trap-bar deadlift" and "Trap bar deadlift" are two
-               different exercises as far as the history is concerned
-     sets      how many sets are laid out to start (you can add more in-app)
-     reps      target rep range, free text, e.g. "5" or "8–10"
-     rpe       target RPE, free text, e.g. "7" or "7–8"
-     rest      seconds of rest to count down after each set
-     load      optional starting-load hint
-     note      optional coaching line, shown under the exercise
-     warmup    true → sets are excluded from the working-set count
+     name      display name — ALSO the key history matches on across sessions,
+               so "Trap-bar deadlift" and "Trap bar deadlift" are two different
+               exercises as far as the PREV column is concerned. Reuse names
+               deliberately: that is how a lift keeps its history when it moves
+               between days.
+     sets      how many rows to lay out (you can add more in-app)
+     fields    which columns this exercise records. Omit for lifting
+               (weight/reps/rpe). Others: ["distance","duration","rpe"] for
+               runs, ["duration","rpe"] for holds, ["reps","rpe"] for jumps.
+     labels    optional per-field column re-heading, e.g. {rpe:"PAIN"}
+     phs       optional per-field placeholder override, e.g. {duration:"min"}
+               (only shows when there is no previous value to suggest)
+     target    prescription line; overrides the reps/rpe/load composition
+     reps, rpe, load   used to compose `target` when `target` is absent
+     rest      seconds of rest counted down after each set
+     note      coaching line shown under the exercise
+     warmup    true → excluded from the working-set count on the card
    ============================================================ */
 const PROGRAM = {
-  block: "Block 0 — baseline week",
+  block: "London — return to soccer, part 1",
   week: 1,
-  weeks: 1,
-  start: "2026-08-09",
-  focus: "Nothing is programmed yet. This week is for capturing what you actually do so the first real block is built on your numbers instead of my guesses.",
-  note: "Use the free session and log your normal HEVY workout into it — same exercises, same order, same weights. On Sunday, export from the Notes screen and hand it over with your recent HEVY history; that becomes Block 1.",
+  weeks: 2,
+  start: "2026-08-11",
+  focus: "Eleven days, eight sessions, one job: rebuild the running and jumping capacity that fifteen days off and a year without run training took away — without spiking the Achilles.",
+  note: "Day 1 S1 · 2 C1 · 3 rest · 4 S2 · 5 C2 · 6 S1 again · 7 rest · 8 C3 · 9 S2 again · 10 C4 · 11 rest. On the four strength days the loaded calf raise REPLACES the PT 3×15 — do one or the other, never both. PT mini-pogos pause for the block; the jump work here covers it. Log the check-in every morning, before coffee.",
+
+  /* Last tested Aug 2025: 1200 m in 4:26, and the Jul-Oct 2025 templates ran
+     100% MAS at 130 m / 30 s → ~4.4 m/s. Discounted to 3.9 for a year without
+     run training, softened by the fact he has kept playing matches. This is a
+     GUESS and is marked as one. It gets replaced from the C3 data: distance
+     and duration are both logged, so a 2-minute rep at the prescribed effort
+     measures the real number without a test session existing. */
+  mas: { value: 3.9, units: "m/s", source: "assumed", date: "2026-08-10",
+         basis: "4.4 m/s tested Aug 2025, discounted for detraining" },
+
   workouts: [
+    /* ---------------------------------------------------------------- */
     {
-      id: "free-a",
-      name: "Free session A",
+      id: "checkin",
+      name: "Morning check-in",
+      accent: "#C9A227", unit: "check",
+      sub: "Ten seconds, before you get going. This is what the heel-lift weaning is being steered by.",
+      exercises: [
+        { name:"Morning stiffness & pain", sets:1,
+          fields:["duration","rpe"], labels:{duration:"MINUTES", rpe:"PAIN"},
+          phs:{duration:"min", rpe:"0-10"},
+          target:"Minutes of stiffness on first getting up · pain 0–10",
+          note:"Minutes, not a vibe: time how long from standing up to walking normally. Stiffness — not pain — is what tracks whether a tendon is actually resolving, so it is the number that matters. Put the heel-lift height you used today in the session note. Two mornings in a row above your own baseline → back to full-height lifts and drop the next conditioning day one level." }
+      ]
+    },
+
+    /* ---------------------------------------------------------------- */
+    {
+      id: "s-post",
+      name: "S1 · Posterior + push",
       accent: "#C97F5B",
-      sub: "Empty by design. Add each exercise as you get to it and log the sets.",
-      freeform: true,
-      exercises: []
+      sub: "Days 1 and 6. Deadlift day. The heaviest session of the block and the furthest from any running.",
+      exercises: [
+        { name:"Trap-bar jump squat", sets:3, fields:["weight","reps","rpe"],
+          target:"3 × 3 · jump fast and high", rest:120,
+          note:"Power first, while you're fresh. Start at 95 lb — you were at 117.5 a year ago, but that was mid-block. Jump fast and high; if the bar is slowing you down it's too heavy. Counts toward the ≤60 two-leg contact cap." },
+        { name:"Deadlift", sets:4,
+          target:"4 × 4 @ RPE 7", rest:180,
+          note:"Start at 265 and add only when you finish a set with 2+ reps in reserve. You pulled 285×8 @8 on 25 July, so 265×4 should feel comfortably submaximal — that is the point on day one back after fifteen days off. Posterior chain work is the best-evidenced thing you do for the back; this is the session that delivers it." },
+        { name:"DB bench press", sets:4,
+          target:"4 × 6–8 @ RPE 7–8", rest:120,
+          note:"Flat, dumbbells. Start at 50s." },
+        { name:"Chest-supported row", sets:3,
+          target:"3 × 8–10 @ RPE 7", rest:90,
+          note:"Chest-supported or a 1-arm DB row, deliberately NOT a bent-over row: you have already loaded the lumbar spine hard today and there is no reason to do it again for a rowing stimulus. Rotate with the 1-arm version between sessions." },
+        { name:"Eccentric leg extension", sets:3, fields:["weight","reps","rpe"],
+          target:"3 × 5 each · 4 s down", rest:120,
+          note:"Lower on one leg over 4 seconds, help it up with two. Go heavier than you could lift with one leg — that is the whole exercise. This is the direct quad-tendon item for the right knee; if the top-outer corner of the kneecap complains, shorten the range rather than dropping the weight." },
+        { name:"Standing calf raise", sets:3, fields:["weight","reps","rpe"],
+          target:"3 × 8 each @ RPE 8 · 90° gate, wedge in", rest:90,
+          note:"REPLACES the PT 3×15 today — do not do both. Single leg, wedge under the forefoot, no dorsiflexion past neutral. You were at 72 lb × 15 in the PT dose, so 8 hard reps wants roughly 85–90. Carolyn's 90° rule applies here regardless of what the heel lifts in your running shoes are doing." }
+      ]
     },
+
+    /* ---------------------------------------------------------------- */
     {
-      id: "free-b",
-      name: "Free session B",
-      accent: "#8FA9C9",
-      sub: "The second slot, so an upper/lower or push/pull split keeps its own history.",
-      freeform: true,
-      exercises: []
+      id: "s-uni",
+      name: "S2 · Unilateral + lateral",
+      accent: "#B48EAD",
+      sub: "Days 4 and 9. Single-leg strength and the frontal plane — the stuff soccer actually asks for.",
+      exercises: [
+        { name:"Single-leg box jump", sets:3, fields:["reps","rpe"],
+          target:"3 × 3 each · land on ONE leg", rest:120,
+          note:"Paul Read's cue, and it still applies: start tall and upright before initiating, and put force into the ground quickly rather than rolling into it with your upper body. You progressed past two-footed landings a year ago, so land on one. 18 contacts a side, well inside the ≤40 single-leg cap." },
+        { name:"Deficit rear-foot-elevated split squat", sets:3,
+          target:"3 × 6 each @ RPE 7–8", rest:150,
+          note:"Start at 45–50 lb — you're doing flat Bulgarians at 50×8–10, and the deficit makes it harder. Stop at the depth where the right knee starts talking rather than chasing the full range." },
+        { name:"Pull-up", sets:3, fields:["reps","rpe"],
+          target:"3 × 5–8 @ RPE 7", rest:120,
+          note:"You're at 4×6. Leave a rep or two in the tank here; this isn't the session to grind." },
+        { name:"Romanian deadlift", sets:3,
+          target:"3 × 6–8 @ RPE 7–8", rest:150,
+          note:"Barbell, start at 135. Hips back, spine long, stop when the hamstrings run out of range rather than when the bar reaches the floor." },
+        { name:"Overhead press", sets:3,
+          target:"3 × 6–8 @ RPE 7–8", rest:120,
+          note:"Dumbbells, seated or standing. Start at 35s and find the number." },
+        { name:"Long-lever hip iso hold", sets:3, fields:["duration","rpe"],
+          target:"3 × 15 s each side", rest:60,
+          note:"Straight from the ARO program — you were holding these with a 25 lb DB on your lap. Complete all reps on one side before switching." },
+        { name:"Lateral lunge to med-ball throw", sets:3, fields:["reps","rpe"],
+          target:"3 × 5 each side", rest:90,
+          note:"14 lb ball, as before. Load and explode. This is the only frontal-plane power item in the block and it matters more than it looks — cutting is a lateral action and nothing else here trains it." },
+        { name:"Seated calf raise", sets:3, fields:["weight","reps","rpe"],
+          target:"3 × 8–12 @ RPE 8 · 90° gate", rest:90,
+          note:"REPLACES the PT 3×15 today. Bent knee, so this hits soleus where the standing version hit gastroc. Same rule: no dorsiflexion past neutral. Copenhagen is deliberately not here — Mobility Day B already gives you it roughly every other day, which is the trial dose." }
+      ]
     },
+
+    /* ---------------------------------------------------------------- */
     {
-      id: "free-c",
-      name: "Free session C",
-      accent: "#9BC98F",
-      sub: "Spare slot — a third training day, or a travel/hotel session.",
+      id: "c-run",
+      name: "C1 · Return to run",
+      accent: "#8FBF6B", unit: "drill",
+      sub: "Day 2. Your first running in months. Grass, easy, nothing maximal — this day exists to buy surface tolerance, not fitness.",
+      exercises: [
+        { name:"Easy continuous run", sets:1, fields:["distance","duration","rpe"],
+          target:"10 min easy · RPE 4–5",
+          note:"FULL-height heel lifts today — this is low-load running and Pringels keeps lifts at full height through this stage. Conversational the whole way. If 10 minutes feels like nothing, that is the correct feeling; do not add more." },
+        { name:"A-skips", sets:3, fields:["distance","rpe"],
+          target:"3 × 20 m", rest:30, note:"Tall posture, quick ground contact." },
+        { name:"B-skips", sets:2, fields:["distance","rpe"],
+          target:"2 × 20 m", rest:30, note:"Add the reach-and-pull. Slower than it feels like it should be." },
+        { name:"Forward extensive pogos", sets:3, fields:["distance","rpe"],
+          target:"3 × 20 m", rest:30,
+          note:"Straight out of ARO Phase 1. Jump from the whole foot, not the toes — that was your own question to Paul and the answer was yes, whole foot. Quiet landings. This is the block's spring work, which is why the PT mini-pogos are paused." },
+        { name:"Strides", sets:4, fields:["distance","rpe"],
+          target:"4 × 40 m @ 75%", rest:60,
+          note:"Build smoothly, hold a few strides, ease down. Full walk-back between. 75% means relaxed face and hands — not a sprint." }
+      ]
+    },
+
+    /* ---------------------------------------------------------------- */
+    {
+      id: "c-cod",
+      name: "C2 · Change of direction",
+      accent: "#6FAF9F", unit: "drill",
+      sub: "Day 5. First cutting since you stopped playing. Everything at 60–70% — this is a technique day wearing a conditioning day's clothes.",
+      exercises: [
+        { name:"Easy continuous run", sets:1, fields:["distance","duration","rpe"],
+          target:"8 min easy · RPE 4–5", warmup:true,
+          note:"Half-height heel lifts from here on — this is the moderate-load stage in Pringels' schedule. Watch tomorrow's stiffness number carefully; it is the first day of the wean that actually tests anything." },
+        { name:"A-skips", sets:2, fields:["distance","rpe"], target:"2 × 20 m", warmup:true, rest:30 },
+        { name:"Dribble technique", sets:3, fields:["distance","rpe"],
+          target:"3 × 20 m", rest:30,
+          note:"Short, quick, choppy steps. The foundation for everything below — you are re-teaching the feet to accept load quickly." },
+        { name:"3-step decel stop", sets:3, fields:["reps","rpe"],
+          target:"3 × 3 each side @ 70%", rest:60,
+          note:"Accelerate, then stop in a split stance over three steps. Focus on the penultimate step — that is where the braking actually happens. 70% of max, no more. This is the single most protective drill in the block: deceleration is what tears things, not acceleration." },
+        { name:"Lateral shuffle", sets:3, fields:["reps","rpe"],
+          target:"3 × 5 each side", rest:60,
+          note:"Dowel or hands overhead to stop the torso leaning. Stay low." },
+        { name:"Zig-zag run", sets:5, fields:["reps","rpe"],
+          target:"5 reps @ 70%", rest:30,
+          note:"Forward and backward, rounded changes of direction — no sharp plants yet." },
+        { name:"Strides", sets:6, fields:["distance","rpe"],
+          target:"6 × 30 m @ 75–80%", rest:60,
+          note:"Slightly quicker than C1. Still not a sprint." }
+      ]
+    },
+
+    /* ---------------------------------------------------------------- */
+    {
+      id: "c-tempo",
+      name: "C3 · MAS tempo intervals",
+      accent: "#5B8FC9", unit: "drill",
+      sub: "Day 8. The session that matters most — and the one that measures your MAS without a test.",
+      exercises: [
+        { name:"Easy continuous run", sets:1, fields:["distance","duration","rpe"],
+          target:"5 min easy · RPE 4", warmup:true, note:"Half-height heel lifts." },
+        { name:"Forward extensive pogos", sets:2, fields:["distance","rpe"],
+          target:"2 × 10 reps", warmup:true, rest:30 },
+        { name:"Strides", sets:3, fields:["distance","rpe"],
+          target:"3 × 40 m @ 75%", warmup:true, rest:60 },
+        { name:"MAS tempo interval", sets:4, fields:["distance","duration","rpe"],
+          target:"4 × 2 min @ RPE 7 · 2 min walk between", rest:120,
+          note:"Run by EFFORT, not by the distance: a pace you could just about hold for six minutes flat out. Target is roughly 420 m per rep, but that number comes from a guessed MAS of 3.9 m/s — so log what you ACTUALLY covered and the guess corrects itself. That is the whole reason we skipped the time trial. Four reps, not the five your old program used, because you're starting further back. If rep 4 lands at RPE 8+, we lower the assumption; if it's RPE 6, we raise it." }
+      ]
+    },
+
+    /* ---------------------------------------------------------------- */
+    {
+      id: "c-grid",
+      name: "C4 · Grids + COD",
+      accent: "#C95B7F", unit: "drill",
+      sub: "Day 10. The hardest conditioning day, and the last before travel. Capped on purpose.",
+      exercises: [
+        { name:"Easy continuous run", sets:1, fields:["distance","duration","rpe"],
+          target:"5 min easy · RPE 4", warmup:true, note:"Half-height heel lifts." },
+        { name:"Strides", sets:3, fields:["distance","rpe"],
+          target:"3 × 40 m @ 75%", warmup:true, rest:60 },
+        { name:"MAS grid — hard 30s", sets:8, fields:["distance","duration","rpe"],
+          target:"30 s hard / 30 s easy × 4 reps × 2 sets", rest:180,
+          note:"Log the hard 30s only — 8 rows, 4 per set, 3 min between sets. Target ~115 m per hard rep and jog ~70 m in the float. Same logic as C3: distance logged is what tells us the real number." },
+        { name:"10 m accel to 3-point stop", sets:4, fields:["reps","rpe"],
+          target:"2 × 2 each side @ 85%", rest:90,
+          note:"Accelerate hard over 10 m, then stop dead into a 3-point stance. 85%, NOT max — the ankle protocol is no longer the limiter but your tissue is: you've done no running for months and hamstrings and calves are what fail when top speed arrives unprepared. Max velocity belongs in the next block, closer to playing." },
+        { name:"Wicket run", sets:4, fields:["distance","rpe"],
+          target:"4 × 30 m @ 85–90%", rest:90,
+          note:"The fastest thing in the block, and it stops at 90%. Tall, relaxed, quick ground contact." },
+        { name:"Mirroring", sets:4, fields:["duration","rpe"],
+          target:"4 × 20 s work / 40 s off",
+          note:"No partner in London, so shadow a cone pattern you haven't memorised, or have someone call directions. Reactive agility is the last piece and it properly belongs in the next block — this is a taste, not the dose." }
+      ]
+    },
+
+    /* ---------------------------------------------------------------- */
+    {
+      id: "free",
+      name: "Spare session",
+      accent: "#7F8FA3",
+      sub: "Empty. For anything unplanned — a hotel session, a swap, a day the gym is shut.",
       freeform: true,
       exercises: []
     }
   ]
 };
 
-/* Past blocks, newest first. Appended when a block ends; nothing reads this
-   at runtime — it is here so the history travels with the repo. */
-const PROGRAM_ARCHIVE = [];
+/* Past blocks, newest first. Appended when a block ends; nothing reads this at
+   runtime — it is here so the history travels with the repo. */
+const PROGRAM_ARCHIVE = [
+  { block: "Block 0 — baseline week", start: "2026-08-09", end: "2026-08-10",
+    note: "Superseded before it ran. Three empty freeform slots, intended to capture a week of normal training before programming. Made redundant when the Hevy export (141 sessions, Jan 2025 – Jul 2026) and the 2025 ACL Rehab Online materials arrived instead." }
+];

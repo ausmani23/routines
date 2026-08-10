@@ -36,14 +36,30 @@ The **Download .md** button is the alternative to Copy: it saves the same
 document to the device, which is the better path if the export is long or you
 want it committed here verbatim.
 
-## Every 6–8 weeks — a new block
+## Every travel window — a new block
 
-When a block runs out, the conversation is a wider one: what the next couple of
-months actually look like. Travel, gym access or the lack of it, whether soccer
-is happening, how the Achilles and the back have been trending. The output is a
-fresh `PROGRAM` with a new `block` name and `start` date, and the old block's
-summary appended to `PROGRAM_ARCHIVE` at the bottom of `program.js` so it
-doesn't vanish when the file is overwritten.
+Blocks are scoped to **stretches of uninterrupted non-travel time**, not to a
+fixed number of weeks. An 11-day stay in one city with a known gym is a real
+planning unit; "weeks 1–8" is not, because the circumstances never hold still
+that long.
+
+So when he lands somewhere new, the conversation is a wider one: how long is he
+there, what equipment and what surfaces, is soccer happening, how have the
+Achilles and the back been trending. The output is a fresh `PROGRAM` with a new
+`block` name and `start` date, and the old block summarised into
+`PROGRAM_ARCHIVE` at the bottom of `program.js` so it doesn't vanish when the
+file is overwritten.
+
+Two standing preferences that shape every block:
+
+- **No maximal test sessions inside a block.** Start from an assumed value,
+  state that it is assumed, and correct it from RPE and from what the logs
+  actually show. The app records distance *and* duration per interval, so a
+  prescribed-effort rep measures aerobic speed without a time trial existing.
+- **Don't double-count.** The daily PT already carries calf raises, Copenhagen,
+  single-leg RDLs and pogos. Anything a block adds on top has to either replace
+  the PT item that day or leave it alone — check `routines.js` before
+  programming a movement that is already in the daily dose.
 
 Standing constraints that survive every block are in
 `claude_workspace/INJURY_CONTEXT.md` — read it before programming anything.

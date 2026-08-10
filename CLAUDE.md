@@ -36,14 +36,31 @@ There is no build, lint, or test step. Development is: edit files, open
 - `routines.js` — the `ROUTINES` data array; the only file that changes for
   rehab-content edits. Schema documented in its header comment. New routines are
   appended objects; the engine needs no changes.
-- `program.js` — the `PROGRAM` object: the current strength block. Unlike
-  `routines.js` this is **meant to churn** — it gets rewritten every Sunday from
-  the week's export, and replaced wholesale every 6–8 weeks. Past blocks go in
-  `PROGRAM_ARCHIVE` at the bottom of the file. See `feedback/README.md`.
-- `lift.js` — the strength engine: set-by-set logging (weight / reps / RPE),
-  previous-session values as placeholders, ad-hoc exercise adding, rest timer,
-  and the markdown export. Loads **after** `app.js` and depends on `db`,
-  `saveDB`, `go`, `ping`, `mmss`, `$`, `onClick` from it.
+- `program.js` — the `PROGRAM` object: the current training block. Unlike
+  `routines.js` this is **meant to churn** — rewritten every Sunday from the
+  week's export, and replaced wholesale **per travel window** (an 11-day stay
+  with a known gym is the planning unit; "weeks 1–8" is not). Past blocks go in
+  `PROGRAM_ARCHIVE` at the bottom. See `feedback/README.md`.
+- `lift.js` — the training engine, for lifting **and** running: set-by-set
+  logging, previous-session values as placeholders, ad-hoc exercise adding,
+  rest timer, and the markdown export. Loads **after** `app.js` and depends on
+  `db`, `saveDB`, `go`, `ping`, `mmss`, `$`, `esc`, `onClick` from it.
+
+### Sets are field-driven, not weight/reps/RPE
+
+An exercise declares `fields` and the set row is built from it: omitted means
+lifting (`weight/reps/rpe`); a run uses `["distance","duration","rpe"]`; a hold
+`["duration","rpe"]`; a jump `["reps","rpe"]`. `labels` and `phs` override a
+column's header and placeholder. A conditioning day is therefore an ordinary
+workout with different fields — **do not add a second engine or screen for
+running.**
+
+A stored set carries only the keys its exercise declared, so the shape is a
+superset (`{ex, n, weight, reps, distance, duration, rpe}`) that mirrors Hevy's
+CSV columns. It is purely additive: sessions logged before distance/duration
+existed still parse. Anything reading a stored set back (`fmtLoggedSet`) must
+format from **which keys are present**, because the exercise definition is long
+gone by then.
 - `app.js` — the engine: audio (`toneAt`/`scheduleAhead`/`say`), screen-wake
   (`keepAwake`), navigation (`go`), rendering (`renderHome`/`renderDetail`),
   sequence builder (`buildSeq` flattens blocks × sides × sets into `state.seq`),

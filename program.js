@@ -74,8 +74,8 @@ const PROGRAM = {
   block: "London — return to soccer, part 1",
   week: 1,
   weeks: 2,
-  start: "2026-08-11",
-  focus: "Eleven days, eight sessions, one job: rebuild the running and jumping capacity that fifteen days off and a year without run training took away — without spiking the Achilles.",
+  start: "2026-08-12",
+  focus: "Ten days, eight sessions, one job: rebuild the running and jumping capacity that fifteen days off and a year without run training took away — without spiking the Achilles.",
   note: "On the four strength days the loaded calf raise REPLACES the PT 3×15 — do one or the other, never both. PT mini-pogos pause for the block; the jump work here covers it. Log the check-in every morning, before coffee.",
 
   /* Last tested Aug 2025: 1200 m in 4:26, and the Jul-Oct 2025 templates ran
@@ -87,19 +87,28 @@ const PROGRAM = {
   mas: { value: 3.9, units: "m/s", source: "assumed", date: "2026-08-10",
          basis: "4.4 m/s tested Aug 2025, discounted for detraining" },
 
-  /* Eleven days. Strength and conditioning alternate, never back to back, and
-     the two rest days sit either side of the block's midpoint. This array is
-     the ONLY statement of what happens when — `note` above no longer repeats
-     it. Moving a day in-app writes an override against the `sid`; it does not
-     edit this. */
+  /* Ten days. Strength and conditioning alternate, never back to back. This
+     array is the ONLY statement of what happens when — `note` above no longer
+     repeats it. Moving a day in-app writes an override against the `sid`; it
+     does not edit this.
+
+     Two constraints reshaped the original eleven-day plan. Day 1 was lost to
+     jet lag on Aug 11, and Aug 21 is a train morning, so it has to stay clear.
+     That leaves nine days for eight sessions — one rest day, not two. It sits
+     at the midpoint, giving 4 on / 1 off / 4 on. The alternation carries the
+     load here: no two strength days and no two conditioning days ever touch,
+     so nothing is worked on consecutive days even across a four-day run.
+
+     sids keep their original workouts, which is why d3 (a rest day) sits
+     mid-array and d7 is gone — a sid is what a drag override and a logged
+     session point at, so it follows its session rather than its position. */
   schedule: [
-    { sid:"d1",  date:"2026-08-11", w:"s-post"  },
-    { sid:"d2",  date:"2026-08-12", w:"c-run"   },
-    { sid:"d3",  date:"2026-08-13", rest:true   },
+    { sid:"d1",  date:"2026-08-12", w:"s-post"  },
+    { sid:"d2",  date:"2026-08-13", w:"c-run"   },
     { sid:"d4",  date:"2026-08-14", w:"s-uni"   },
     { sid:"d5",  date:"2026-08-15", w:"c-cod"   },
-    { sid:"d6",  date:"2026-08-16", w:"s-post"  },
-    { sid:"d7",  date:"2026-08-17", rest:true   },
+    { sid:"d3",  date:"2026-08-16", rest:true   },
+    { sid:"d6",  date:"2026-08-17", w:"s-post"  },
     { sid:"d8",  date:"2026-08-18", w:"c-tempo" },
     { sid:"d9",  date:"2026-08-19", w:"s-uni"   },
     { sid:"d10", date:"2026-08-20", w:"c-grid"  },

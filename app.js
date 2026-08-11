@@ -332,7 +332,13 @@ function renderUpcoming(){
   const blk = $("#upBlock");
   if(blk) blk.textContent = PROGRAM.block || "";
   const note = $("#upNote");
-  if(note) note.textContent = PROGRAM.note || "";
+  /* Split on blank lines rather than setting textContent: a note that runs to
+     more than one paragraph — rationale, then substitution rules, then what to
+     do when something hurts — otherwise renders as one unreadable wall. A
+     single-paragraph note is unaffected. esc() first: this is still data, not
+     markup. */
+  if(note) note.innerHTML = (PROGRAM.note || "").split(/\n\s*\n/)
+    .map(p=>`<span class="para">${esc(p.trim())}</span>`).join("");
   host.innerHTML = upcomingDays(10).map(d=>{
     const s = dailySummary(d.key);
     const names = s.items.map(i=>i.short).join(" · ");

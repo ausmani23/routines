@@ -197,11 +197,10 @@ function go(id){
   document.querySelectorAll(".screen").forEach(s=>s.classList.toggle("on", s.id===id));
   window.scrollTo(0,0);
   if(id!=="run"){ stopTick(); keepAwake(false); clearScheduled(); mediaSession(false); state.running=false; }
-  if(id!=="lift" && typeof stopRest==="function") stopRest();
   // the accent is set per routine/workout; drop it so a list screen returns to the base teal
   if(LISTS.includes(id)||id==="notes") document.documentElement.style.removeProperty("--signal");
   if(LISTS.includes(id)) noteCtx = null;   // back on a list = no longer inside a session
-  if(id==="notes") paintNoteCtx();
+  if(id==="notes"){ paintNoteCtx(); renderNotes(); }
   if(id==="home"){ renderToday(); applySWReload(); }  // a deploy that landed mid-routine applies here
   if(id==="upcoming") renderUpcoming();
   if(id==="browse") renderBrowse();
@@ -643,17 +642,35 @@ function paintNoteCtx(){
     `<button class="exdel" id="nCtxX" aria-label="Write this note about nothing in particular">✕</button>`;
   $("#nCtxX").onclick = ()=>{ setNoteCtx(null); paintNoteCtx(); };
 }
+/* Notes written inside a strength session (the session note and the per-lift
+   notes) live on the session record, not in db.notes — but they must still be
+   VISIBLE here, or they read as lost. Rendered read-only: deleting them would
+   mean editing the training log, which the ✕ on a free note should not do. */
+function sessionNoteItems(){
+  const ss = (db.strength && db.strength.sessions) || [];
+  const out = [];
+  ss.forEach(s=>{
+    const bits = [];
+    if(s.note) bits.push(s.note);
+    if(s.exNotes) Object.keys(s.exNotes).forEach(ex=>bits.push(`${ex} — ${s.exNotes[ex]}`));
+    if(bits.length) out.push({ ts:s.end||s.start, text:bits.join("\n"), name:s.wName||s.w, sess:true });
+  });
+  return out;
+}
 function renderNotes(){
-  const list = $("#nList"), n = db.notes;
-  $("#nCount").textContent = n.length ? `${n.length} note${n.length>1?"s":""}` : "none yet";
-  list.innerHTML = !n.length
+  const list = $("#nList");
+  const items = db.notes.map(x=>({ ts:x.ts, text:x.text, name:x.ctx && x.ctx.name, del:x.ts }))
+    .concat(sessionNoteItems())
+    .sort((a,b)=>b.ts-a.ts);
+  $("#nCount").textContent = items.length ? `${items.length} note${items.length>1?"s":""}` : "none yet";
+  list.innerHTML = !items.length
     ? `<p class="hint" style="border:0">Nothing yet. Jot down anything you want the next re-program to
        take into account — what felt easy, what hurt, what you skipped and why, how the week went.</p>`
-    : n.slice().reverse().map(x=>`
+    : items.map(x=>`
         <div class="note">
           <div class="note-h"><span>${isoDay(x.ts)} · ${new Date(x.ts).toLocaleTimeString([],{hour:"numeric",minute:"2-digit"})}${
-            x.ctx && x.ctx.name ? ` · <em>${esc(x.ctx.name)}</em>` : ""}</span>
-            <button class="exdel" data-note="${x.ts}" aria-label="Delete note">✕</button></div>
+            x.name ? ` · <em>${esc(x.name)}</em>` : ""}${x.sess ? ` · <i class="sess">session</i>` : ""}</span>
+            ${x.del ? `<button class="exdel" data-note="${x.del}" aria-label="Delete note">✕</button>` : ""}</div>
           <div class="note-b">${esc(x.text).replace(/\n/g,"<br>")}</div>
         </div>`).join("");
   list.querySelectorAll("[data-note]").forEach(el=>{ el.onclick=()=>{
@@ -733,9 +750,56 @@ function downloadExport(){
     flash("Downloaded — drop it in the repo's feedback/ folder.");
   }catch(e){ flash("Download failed — use Copy instead."); }
 }
+/* ---------- lift-history import ----------
+   The repo is public, so past training data can never ship with the app —
+   history arrives by pasting a Hevy CSV export into the notes box and tapping
+   Import. Parsed into db.strength.hist (flat {ex, d, w, r} records, lbs) and
+   read only by the per-lift history panel on the strength screen. Each import
+   replaces the last, so re-exporting from Hevy is always safe. */
+function parseCSV(text){
+  const rows=[]; let row=[], cur="", q=false;
+  for(let i=0;i<text.length;i++){
+    const c=text[i];
+    if(q){ if(c==='"'){ if(text[i+1]==='"'){ cur+='"'; i++; } else q=false; } else cur+=c; }
+    else if(c==='"') q=true;
+    else if(c===',' ){ row.push(cur); cur=""; }
+    else if(c==='\n'||c==='\r'){
+      if(cur!==""||row.length){ row.push(cur); rows.push(row); row=[]; cur=""; }
+      if(c==='\r'&&text[i+1]==='\n') i++;
+    }
+    else cur+=c;
+  }
+  if(cur!==""||row.length){ row.push(cur); rows.push(row); }
+  return rows;
+}
+function importHistory(){
+  const txt = $("#nText").value;
+  if(!txt.trim()){ flash("Paste a Hevy CSV export into the box above first."); return; }
+  const rows = parseCSV(txt);
+  const head = rows[0]||[], col = n=>head.indexOf(n);
+  const iEx=col("exercise_title"), iT=col("start_time"), iW=col("weight_lbs"),
+        iR=col("reps"), iTy=col("set_type");
+  if(iEx<0 || iW<0 || iR<0){ flash("That doesn't look like a Hevy CSV export — nothing imported."); return; }
+  const hist=[], exSet=new Set();
+  rows.slice(1).forEach(r=>{
+    if(iTy>=0 && r[iTy]==="warmup") return;
+    const w=parseFloat(r[iW]), reps=parseInt(r[iR],10);
+    if(isNaN(w) || isNaN(reps) || reps<=0) return;
+    const t=Date.parse(r[iT]); if(isNaN(t)) return;
+    hist.push({ ex:r[iEx], d:isoDay(t), w, r:reps });
+    exSet.add(r[iEx]);
+  });
+  if(!hist.length){ flash("No usable sets in that paste — nothing imported."); return; }
+  db.strength = db.strength || { sessions:[] };
+  db.strength.hist = hist;
+  $("#nText").value=""; db.noteDraft="";
+  saveDB();
+  flash(`Imported ${hist.length} sets across ${exSet.size} exercises (replaces any earlier import).`);
+}
 onClick("#nAdd", addNote);
 onClick("#nCopy", copyExport);
 onClick("#nDl", downloadExport);
+onClick("#nImport", importHistory);
 if($("#nText")) $("#nText").oninput = ()=>{ db.noteDraft = $("#nText").value; saveDB(); };
 document.addEventListener("click", e=>{
   if(e.target.closest('[data-go="notes"]') && $("#nText")){

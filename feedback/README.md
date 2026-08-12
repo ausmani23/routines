@@ -11,9 +11,16 @@ one button, once a week.
 | What | Where it's written | Where it shows up |
 | --- | --- | --- |
 | Free-text notes | Notes & export screen, or "Add a note" after a routine | `## Notes` in the export |
-| Strength sets — weight, reps, RPE | The lift screens, set by set | `## Strength sessions` |
-| Session notes | The box at the bottom of a lift session | Quoted under that session |
+| Strength sets — weight, reps, RPE | The lift screens, set by set (weights stored in lbs; kg is display-only) | `## Strength sessions` |
+| Session notes | The box at the bottom of a lift session | Quoted under that session, and listed on the Notes screen |
+| Per-exercise notes | The dashed box under each lift's sets | Italic line under that lift |
+| Session length (min) | Self-reported next to Finish — the Garmin does the timing | `· N min` on the session heading |
 | Routine completions | Automatic, on finishing a routine | `## Routine completions` |
+
+Past history from before the app (the Hevy export) lives in `localStorage`
+too, via **Notes & export → Import lift history** — paste the Hevy CSV into
+the notes box and tap Import. It feeds the per-lift history panel (tap a
+lift's name) and is never committed here: this repo is public.
 
 ## Sunday — the weekly re-program
 

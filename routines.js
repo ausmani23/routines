@@ -57,9 +57,9 @@ const ROUTINES = [
     {name:"Cat–cow", badge:"req", mode:"time", sec:60, dose:"60 sec · slow, breath-led",
      detail:"On hands and knees, wrists under shoulders, knees under hips. INHALE: drop the belly, lift the chest and tailbone, look gently up. EXHALE: press the floor away, round the whole spine toward the ceiling, tuck the chin and tailbone. Let each breath set the pace — one full breath per arch-and-round.",
      cue:"The wake-up call for the spine. After a night curled up, this is the gentlest way to take every segment through flexion and extension before anything bears load."},
-    {name:"Dynamic supine twist", mode:"time", sec:45, sides:2, dose:"45 sec each side, moving",
-     detail:"On your back, arms out in a T, knees bent, feet flat. Let both knees fall slowly toward the floor on one side while your head turns the other way. Pause one breath at the bottom, then draw the knees back up to center. Repeat for the whole 45 seconds — a slow pendulum, not a held stretch.",
-     cue:"Rotation is the range the night takes away first. Moving in and out of it — rather than parking there — is what teaches the back it's safe."},
+    {name:"Dynamic supine twist", mode:"time", sec:90, dose:"90 sec · alternating sides",
+     detail:"On your back, arms out in a T, knees bent, feet flat. Let both knees fall slowly toward the floor on one side while your head turns the other way. Pause one breath at the bottom, then draw them up through center and straight over to the other side. One continuous slow pendulum for the whole 90 seconds.",
+     cue:"Rotation is the range the night takes away first. One continuous movement — not a held left, then a held right — is what teaches the back it's safe."},
     {name:"Half-kneeling lunge", badge:"req", mode:"time", sec:45, sides:2, sets:3, dose:"45 sec each side × 3, rocking",
      detail:"Kneel on one knee (pad it if you like), front foot flat, torso tall. FIRST tuck the pelvis under — think belt buckle up toward the ribs — and squeeze the glute on the kneeling side. Keeping that, rock gently forward for 2–3 seconds until the front of the kneeling-side hip lengthens, then rock back. Repeat, breathing out on each rock forward.",
      cue:"Your favorite for a reason — it hits exactly where the night leaves you tight. The glute squeeze is what makes it work: without it you arch the low back instead of lengthening the psoas. Three rounds a side now: the routine is down to what actually earns its place, so this gets the time back."}
@@ -127,7 +127,7 @@ const ROUTINES = [
 },
 {
   id:"mobility", name:"Mobility — A / B", short:"Mobility", accent:"#B48EAD", sched:{freq:"daily"},
-  sub:"Once a day, alternating. A is the QL and low back — both sides, evenly. B is hips, groin and the posterior chain that actually keeps the back quiet. Everything moves: ease in and out of each stretch rather than hanging at end range.",
+  sub:"Once a day, alternating. A is the QL and low back — both sides, evenly. B is hips, groin and the posterior chain that actually keeps the back quiet. Everything moves: ease in and out of each stretch rather than hanging at end range. On a day this runs straight into the gym, finish with the lift-prep group at the end.",
   variants:["Day A — QL & back","Day B — hips & chain"],
   variantTags:["side bends & twists","strength that travels"],
   variantMode:"alternate", defaultLevel:0,
@@ -155,23 +155,23 @@ const ROUTINES = [
      detail:"Stand, hands on the back of your hips like a frame. Lean gently back over your hands, hold 3 seconds, return to tall. Sitting parks you in flexion for hours; this is the direct antidote.",
      cue:"Small range. Extend through the whole spine, don't hinge at one segment."},
 
-    {variant:0, name:"Dynamic supine twist", mode:"time", sec:30, sides:2, dose:"30 sec each side, moving",
-     detail:"On your back, arms in a T, knees bent. Lower both knees slowly toward one side while the head turns the other way, pause a breath, draw them back to center, repeat. Then the other side.",
-     cue:"Let gravity take the knees down — never press them with a hand. In and out of the stretch, not parked in it."},
+    {variant:0, name:"Dynamic supine twist", mode:"time", sec:60, dose:"60 sec · alternating sides",
+     detail:"On your back, arms in a T, knees bent. Lower both knees slowly toward one side while the head turns the other way, pause a breath, then bring them up through center and over to the other side. Keep the pendulum going for the full minute.",
+     cue:"Let gravity take the knees down — never press them with a hand. One continuous movement, not a held side then a swap."},
 
     {group:"Day A — the QL work", variant:0, name:"Side-reach child's pose",
      mode:"time", sec:45, sides:2, dose:"45 sec each way, walking in and out",
      detail:"Hips to heels, arms long. Walk both hands over to one side until you feel a long pull down the opposite flank, ribs to hip. Take two slow breaths there, walk halfway back, then reach over again. Then swap sides.",
      cue:"Breathe into the stretched side — you should feel those ribs expand under tension. Even time both ways."},
 
-    {variant:0, name:"Dynamic QL side bend", mode:"time", sec:45, sides:2,
-     dose:"45 sec each side, flowing",
-     detail:"Stand tall, one arm overhead. Push the same-side hip OUT to the side as you lean away, ride the bend for 2–3 seconds, then come back to tall. Repeat in a slow rhythm for the 45 seconds, then swap arms.",
-     cue:"The hip shift is the whole exercise — without it you're only stretching lat. Moving in and out beats hanging: the QL responds better to rhythm than to a static pull."},
+    {variant:0, name:"Dynamic QL side bend", mode:"time", sec:90,
+     dose:"90 sec · alternating sides, flowing",
+     detail:"Stand tall. Reach one arm overhead, push the same-side hip OUT as you lean away, ride the bend for 2–3 seconds, come back to tall — then swap arms and bend the other way. Keep alternating in a slow rhythm for the 90 seconds.",
+     cue:"The hip shift is the whole exercise — without it you're only stretching lat. Alternating beats hanging: the QL responds better to rhythm than to a static pull."},
 
-    {variant:0, name:"90/90 seated rotation", mode:"time", sec:45, sides:2, dose:"45 sec per side",
-     detail:"Seated, both knees bent to 90° — one leg in front, one to the side. Rotate the torso slowly through range over the front leg, pause at end range, come back. No forcing.",
-     cue:"Rotation feeds the QL from a different angle than the side bend — and it is the hip range soccer actually asks for."},
+    {variant:0, name:"90/90 seated rotation", mode:"time", sec:90, dose:"90 sec · alternating sides",
+     detail:"Seated, both knees bent to 90° — one leg in front, one to the side. Rotate the torso slowly through range over the front leg, pause at end range, then swing both knees through center to the other side and rotate over that leg. Keep switching for the 90 seconds. No forcing.",
+     cue:"Rotation feeds the QL from a different angle than the side bend — and the knee swing through center is the hip range soccer actually asks for."},
 
     {group:"Day A — upstream causes", variant:0, name:"Figure-4 glute stretch",
      mode:"time", sec:45, sides:2, dose:"45 sec per side, pulsing",
@@ -216,7 +216,20 @@ const ROUTINES = [
      cue:"Stands in for the Nordic curl while you have no anchor. Low dose is enough — a few hard eccentric reps a week is the effective dose in the trials.",
      levels:["From a glute bridge, walk the heels out a step at a time and back in, hips held high.",
              "Walk out to near-straight legs, then lower the hips over 5 sec.",
-             "Heels on a towel or socks on a smooth floor — slide out slowly, 5 sec, and drag back."]}
+             "Heels on a towel or socks on a smooth floor — slide out slowly, 5 sec, and drag back."]},
+
+    {group:"Before the gym — lift prep", name:"Squat-to-stand", badge:"opt", mode:"reps", target:"6 reps", est:45,
+     dose:"6 slow reps · gym days only",
+     detail:"Feet shoulder-width. Hinge down and take hold of your toes with the legs near-straight, then pull the hips down into a deep squat — chest up, knees pushed out by the elbows. Pause a breath, lift the hips back up to the hamstring stretch, and stand tall.",
+     cue:"This whole group runs on days the routine leads straight into lifting — general prep, injury prevention, nothing more. Skip all three on a no-gym day. Ankles, hips and T-spine in one move."},
+    {name:"World's greatest stretch", badge:"opt", mode:"time", sec:80,
+     dose:"80 sec · alternating sides · gym days only",
+     detail:"Step into a long lunge, both hands to the floor inside the front foot. Sink the hips for a breath, then rotate the inside arm up toward the ceiling, eyes following the hand. Step back, swap legs, keep alternating.",
+     cue:"Hips, groin and upper-back rotation in one package — the closest thing to a general warm-up for everything the bar will ask."},
+    {name:"Scapular wall slides", badge:"opt", mode:"reps", target:"8 reps", est:40,
+     dose:"8 slow reps · gym days only",
+     detail:"Back against a wall, arms in a goalpost, forearms and backs of the wrists as close to the wall as they'll go. Slide the arms up overhead and back down without the low back arching away from the wall.",
+     cue:"Primes the shoulders and upper back for pressing, rowing and pull-ups without loading anything. If the wrists can't reach the wall, work where you are — that range is part of what this trains."}
   ]
 },
 {

@@ -73,9 +73,31 @@ to, so there is nothing to keep in sync. Dragging on Upcoming writes
 `db.sched[blockName][sid]` — the app has no backend and cannot edit `program.js`,
 so **a move is an override, not an edit**, and "Reset to programmed" clears them.
 - `lift.js` — the training engine, for lifting **and** running: set-by-set
-  logging, previous-session values as placeholders, ad-hoc exercise adding,
-  rest timer, and the markdown export. Loads **after** `app.js` and depends on
-  `db`, `saveDB`, `go`, `ping`, `mmss`, `$`, `esc`, `onClick` from it.
+  logging, proposed values prefilled in every field (last session's numbers,
+  else the exercise's `suggest` from program.js — dimmed until typed over or
+  ticked), an RPE dropdown, per-exercise notes, a per-lift history panel
+  (rep records + estimated 1RM, fed by the in-app log and the Hevy import),
+  ad-hoc exercise adding, the lb ⇄ kg display toggle, and the markdown export.
+  There is deliberately **no rest/session timer** — he times on his Garmin;
+  session length is self-reported in the field next to Finish and stored as
+  `mins`. Loads **after** `app.js` and depends on `db`, `saveDB`, `go`,
+  `ping`, `mmss`, `$`, `esc`, `onClick` from it.
+
+### Weights are stored in lbs, always
+
+`db.strength` (sets, `suggest` in program.js, the imported Hevy history) is
+canonically lbs, mirroring Hevy's `weight_lbs`. The kg toggle on the lift
+screen converts only what is displayed and typed (`wOut`/`wIn` in lift.js);
+storage and export never change meaning. Don't add a second stored unit.
+
+### History can't ship with the app
+
+The repo is public, so past training data (the Hevy CSV in
+`claude_workspace/`) must never be committed. The per-lift history panel is
+fed by pasting a Hevy CSV into the Notes screen box and tapping Import —
+stored in `localStorage` (`db.strength.hist`), replaced wholesale per import.
+Exercise names are matched by normalisation ("Deadlift (Barbell)" ≡
+"Deadlift").
 
 ### Sets are field-driven, not weight/reps/RPE
 

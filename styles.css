@@ -268,14 +268,49 @@ button{font:inherit;color:inherit;background:none;border:none;cursor:pointer}
   padding:12px;resize:vertical;-webkit-appearance:none}
 .lift-note textarea:focus,#nText:focus{outline:none;border-color:var(--signal)}
 
-/* Rest bar sits above the sticky Finish button, out of the way of the thumb. */
-.rest{position:fixed;left:50%;transform:translateX(-50%);bottom:calc(env(safe-area-inset-bottom) + 86px);
-  display:flex;align-items:center;gap:12px;background:var(--panel-2);border:1px solid var(--line);
-  border-radius:999px;padding:9px 10px 9px 18px;font-size:12.5px;color:var(--dimmer);
-  box-shadow:0 6px 24px rgba(0,0,0,.45);z-index:5}
-.rest[hidden]{display:none}
-.rest b{color:var(--signal);font-size:16px;font-variant-numeric:tabular-nums;font-weight:700}
-.rest button{border:1px solid var(--line);border-radius:999px;padding:5px 13px;font-size:11.5px;color:var(--dim)}
+/* last session's note, surfaced on the way back into a workout */
+.prevnote{color:var(--dim);font-size:12.5px;font-style:italic;line-height:1.5;
+  border-left:2px solid var(--line);padding-left:10px;margin:10px 0 0}
+.prevnote[hidden]{display:none}
+/* the lb ⇄ kg switch — storage stays lbs, only the surface converts */
+.lift-tools{display:flex;justify-content:flex-end;margin:10px 0 2px}
+#lUnit{border:1px solid var(--line);background:var(--panel);border-radius:999px;
+  padding:6px 16px;font-size:12px;font-weight:650;color:var(--dim);
+  font-variant-numeric:tabular-nums}
+#lUnit::before{content:"units · ";color:var(--dimmer);font-weight:400}
+/* a proposed value: shown, but dimmed until typed over or ticked */
+.fld.sugg{color:var(--dimmer)}
+select.fld{text-align-last:center;appearance:none;-webkit-appearance:none}
+/* per-exercise note */
+.exnote{width:100%;min-width:0;margin-top:8px;background:transparent;
+  border:1px dashed var(--line);border-radius:9px;color:var(--bone);font:inherit;
+  font-size:12.5px;padding:8px 10px;-webkit-appearance:none}
+.exnote:focus{outline:none;border-color:var(--signal)}
+.exnote::placeholder{color:var(--dimmer);opacity:.6}
+.exn-prev{font-style:normal}
+/* self-reported session length, under the session note */
+.durrow{display:flex;align-items:center;gap:8px;margin-top:10px;
+  font-size:12.5px;color:var(--dim)}
+.durrow input{width:72px;background:var(--panel);border:1px solid var(--line);border-radius:9px;
+  color:var(--bone);font:inherit;font-size:15px;font-variant-numeric:tabular-nums;
+  padding:9px 8px;text-align:center;-webkit-appearance:none}
+.durrow input:focus{outline:none;border-color:var(--signal)}
+/* the per-lift history panel (tap the lift's name) */
+.lift-head .nm{text-align:left;padding:0}
+.lift-head .nm .histgo{color:var(--dimmer);font-size:11px;margin-left:6px}
+.hist{border:1px solid var(--line);border-radius:11px;background:var(--panel);
+  padding:12px;margin-top:10px;font-size:12.5px;color:var(--dim);line-height:1.6}
+.hist .big{color:var(--bone);font-size:13.5px}
+.hist .big b{color:var(--signal)}
+.hist .big s,.hist-day s{text-decoration:none;color:var(--dimmer);font-size:11.5px;margin-left:6px}
+.hist-cap{margin:10px 0 0;font-size:9.5px;letter-spacing:.1em;text-transform:uppercase;color:var(--dimmer)}
+.reprec{display:flex;flex-wrap:wrap;gap:6px;margin-top:6px}
+.reprec span{border:1px solid var(--line);border-radius:8px;padding:3px 9px;
+  font-size:11.5px;color:var(--dim);font-variant-numeric:tabular-nums}
+.reprec span b{color:var(--bone)}
+.hist-day{font-variant-numeric:tabular-nums;margin-top:4px}
+.spark{display:block;width:100%;height:40px;margin:10px 0 0}
+.spark polyline{fill:none;stroke:var(--signal);stroke-width:2;vector-effect:non-scaling-stroke}
 
 /* ---------- notes ---------- */
 .wide{width:100%;margin-top:10px;background:var(--signal);color:#07141A;font-weight:700;
@@ -297,6 +332,7 @@ button{font:inherit;color:inherit;background:none;border:none;cursor:pointer}
 .note-h{display:flex;justify-content:space-between;align-items:center;
   font-size:10.5px;letter-spacing:.1em;text-transform:uppercase;color:var(--dimmer)}
 .note-h em{font-style:normal;color:var(--dim)}
+.note-h .sess{font-style:normal;color:var(--dimmer)}
 .note-b{font-size:14px;color:var(--bone);margin-top:5px;line-height:1.5;white-space:pre-wrap}
 #nList{margin-top:20px}
 

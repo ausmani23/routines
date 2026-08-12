@@ -229,6 +229,14 @@ function historyFor(name){
       if(normEx(x.ex)===key) add(isoDay(s.end||s.start), parseFloat(x.weight), parseInt(x.reps,10));
     });
   });
+  /* history.js — the baked-in past (Hevy + the Paul Read log), committed to
+     the repo as bare [ex, date, lbs, reps] rows. See make_history.py. */
+  (typeof HISTORY !== "undefined" ? HISTORY : []).forEach(h=>{
+    if(normEx(h[0])===key) add(h[1], h[2], h[3]);
+  });
+  /* …plus anything pasted in through the Notes-screen Hevy import since the
+     last regeneration. Overlap with HISTORY is harmless: records and the
+     trend are max-per-day, so duplicates change nothing. */
   ((db.strength && db.strength.hist)||[]).forEach(h=>{
     if(normEx(h.ex)===key) add(h.d, h.w, h.r);
   });

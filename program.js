@@ -78,20 +78,19 @@
    ============================================================ */
 const PROGRAM = {
   block: "London — return to soccer, part 1",
-  week: 1,
+  week: 2,
   weeks: 2,
   start: "2026-08-12",
-  focus: "Ten days, eight sessions, one job: rebuild the running and jumping capacity that fifteen days off and a year without run training took away — without spiking the Achilles.",
-  note: "On the four strength days the loaded calf raise REPLACES the PT 3×15 — do one or the other, never both. PT mini-pogos pause for the block; the jump work here covers it. Log the check-in every morning, before coffee.",
+  focus: "The back half of the block, re-planned around an acute LEFT retrocalcaneal bursitis that flared after C2: keep every gram of strength, move all conditioning onto the bike, and put nothing through the heel at speed until the sports-med visit.",
+  note: "The bursitis is a compression problem at the same left-heel insertion as the Achilles work, and the treatment is Carolyn's existing rules applied harder: heel elevated, no dorsiflexion past neutral, pain is not productive. So this week: FULL-height heel lifts everywhere — the wean is scrapped, not paused — and no running, jumping, skipping or cutting of any kind until the doctor says otherwise. Lifting continues as normal; heavy slow calf work inside the 90° gate is good for this, capped at RPE 8. One caution: NSAIDs can mask symptoms for a day or two after the course ends, so read the first two clean mornings conservatively. On the two strength days the loaded calf raise still REPLACES the PT 3×15 — one or the other, never both. PT mini-pogos stay paused. Log the check-in every morning, before coffee.",
 
   /* Last tested Aug 2025: 1200 m in 4:26, and the Jul-Oct 2025 templates ran
      100% MAS at 130 m / 30 s → ~4.4 m/s. Discounted to 3.9 for a year without
-     run training, softened by the fact he has kept playing matches. This is a
-     GUESS and is marked as one. It gets replaced from the C3 data: distance
-     and duration are both logged, so a 2-minute rep at the prescribed effort
-     measures the real number without a test session existing. */
+     run training. Still a GUESS: the C3 running session that was going to
+     measure it was replaced by bike work when the bursitis arrived, so the
+     number carries over unmeasured into the next block. */
   mas: { value: 3.9, units: "m/s", source: "assumed", date: "2026-08-10",
-         basis: "4.4 m/s tested Aug 2025, discounted for detraining" },
+         basis: "4.4 m/s tested Aug 2025, discounted for detraining; C3 measurement lost to the bursitis week" },
 
   /* Ten days. Strength and conditioning alternate, never back to back. This
      array is the ONLY statement of what happens when — `note` above no longer
@@ -107,7 +106,12 @@ const PROGRAM = {
 
      sids keep their original workouts, which is why d3 (a rest day) sits
      mid-array and d7 is gone — a sid is what a drag override and a logged
-     session point at, so it follows its session rather than its position. */
+     session point at, so it follows its session rather than its position.
+
+     Bursitis re-plan (Aug 16): d8 and d10 now point at the bike sessions
+     (c-bike, c-bike2) instead of c-tempo and c-grid. The running workouts
+     stay in `workouts` unscheduled so nothing keyed to them breaks — they
+     come back when the sports-med visit clears running. */
   schedule: [
     { sid:"d1",  date:"2026-08-12", w:"s-post"  },
     { sid:"d2",  date:"2026-08-13", w:"c-run"   },
@@ -115,9 +119,9 @@ const PROGRAM = {
     { sid:"d5",  date:"2026-08-15", w:"c-cod"   },
     { sid:"d3",  date:"2026-08-16", rest:true   },
     { sid:"d6",  date:"2026-08-17", w:"s-post"  },
-    { sid:"d8",  date:"2026-08-18", w:"c-tempo" },
+    { sid:"d8",  date:"2026-08-18", w:"c-bike"  },
     { sid:"d9",  date:"2026-08-19", w:"s-uni"   },
-    { sid:"d10", date:"2026-08-20", w:"c-grid"  },
+    { sid:"d10", date:"2026-08-20", w:"c-bike2" },
     { sid:"d11", date:"2026-08-21", rest:true   }
   ],
 
@@ -127,13 +131,13 @@ const PROGRAM = {
       id: "checkin",
       name: "Morning check-in", short: "Check-in",
       accent: "#C9A227", unit: "check", cat: "check", sched: {freq:"daily"},
-      sub: "Ten seconds, before you get going. This is what the heel-lift weaning is being steered by.",
+      sub: "Ten seconds, before you get going. This week it is watching the left heel — the bursitis — as much as the tendon.",
       exercises: [
         { name:"Morning stiffness & pain", sets:1,
           fields:["duration","rpe"], labels:{duration:"MINUTES", rpe:"PAIN"},
           phs:{duration:"min", rpe:"0-10"},
           target:"Minutes of stiffness on first getting up · pain 0–10",
-          note:"Minutes, not a vibe: time how long from standing up to walking normally. Stiffness — not pain — is what tracks whether a tendon is actually resolving, so it is the number that matters. Put the heel-lift height you used today in the session note. Two mornings in a row above your own baseline → back to full-height lifts and drop the next conditioning day one level." }
+          note:"Minutes, not a vibe: time how long from standing up to walking normally. The PAIN number this week is specifically the back of the LEFT heel — the bursitis spot — and note any visible swelling there in the session note. FULL-height heel lifts every day, no wean; once, this week, work out exactly which insert/setting 'full height' is and write it down here, so the sports-med doctor gets an accurate account. Any morning the heel is worse than the day before → skip that day's conditioning entirely." }
       ]
     },
 
@@ -142,11 +146,11 @@ const PROGRAM = {
       id: "s-post",
       name: "S1 · Posterior + push",
       accent: "#C97F5B", cat: "strength",
-      sub: "Deadlift day. The heaviest session of the block and the furthest from any running.",
+      sub: "Deadlift day. The heaviest session of the block — and lifting is the one thing the bursitis doesn't touch.",
       exercises: [
-        { name:"Trap-bar jump squat", sets:3, fields:["weight","reps","rpe"],
-          target:"3 × 3 · jump fast and high", rest:120, suggest:{weight:95, reps:3, rpe:8},
-          note:"Power first, while you're fresh. Start at 95 lb — you were at 117.5 a year ago, but that was mid-block. Jump fast and high; if the bar is slowing you down it's too heavy. Counts toward the ≤60 two-leg contact cap." },
+        /* Trap-bar jump squat pulled for the bursitis week: rapid ankle
+           stretch-shortening under load is exactly the stimulus on pause.
+           It returns, same name and suggest, when running is cleared. */
         { name:"Deadlift", sets:4,
           target:"4 × 4 @ RPE 7", rest:180, suggest:{weight:275, reps:4, rpe:7},
           note:"Add only when you finish a set with 2+ reps in reserve. You pulled 285×8 @8 on 25 July, so this should feel comfortably submaximal — that is the point in week one back after fifteen days off. Posterior chain work is the best-evidenced thing you do for the back; this is the session that delivers it." },
@@ -160,8 +164,8 @@ const PROGRAM = {
           target:"3 × 5 each · 4 s down", rest:120, suggest:{weight:170, reps:5, rpe:8},
           note:"Lower on one leg over 4 seconds, help it up with two. Go heavier than you could lift with one leg — that is the whole exercise. This is the direct quad-tendon item for the right knee; if the top-outer corner of the kneecap complains, shorten the range rather than dropping the weight." },
         { name:"Standing calf raise", sets:3, fields:["weight","reps","rpe"],
-          target:"3 × 8 each @ RPE 8 · 90° gate, wedge in", rest:90, suggest:{weight:165, reps:8, rpe:8},
-          note:"REPLACES the PT 3×15 today — do not do both. Single leg, wedge under the forefoot, no dorsiflexion past neutral. You did these on the LEG-PRESS sled on 12 Aug (165×8 @8) — the sled carries part of the load, which is why the number reads so much higher than a free-standing raise would; stick with the same machine so the history stays comparable. Carolyn's 90° rule applies here regardless of what the heel lifts in your running shoes are doing." }
+          target:"3 × 8 each @ RPE 7–8 · 90° gate, wedge in", rest:90, suggest:{weight:165, reps:8, rpe:7},
+          note:"REPLACES the PT 3×15 today — do not do both. Single leg, wedge under the forefoot, no dorsiflexion past neutral — the 90° gate is also exactly what keeps the bursa out of its compression zone, which is why this stays in the program this week. Cap it at RPE 7–8 rather than pushing to 8+; stop the set at the first hint of pain at the back of the left heel. Same LEG-PRESS sled as 12 Aug (165×8 @8) so the history stays comparable." }
       ]
     },
 
@@ -172,9 +176,10 @@ const PROGRAM = {
       accent: "#B48EAD", cat: "strength",
       sub: "Single-leg strength and the frontal plane — the stuff soccer actually asks for.",
       exercises: [
-        { name:"Single-leg box jump", sets:3, fields:["reps","rpe"],
-          target:"3 × 3 each · land on ONE leg", rest:120, suggest:{reps:3, rpe:7},
-          note:"Paul Read's cue, and it still applies: start tall and upright before initiating, and put force into the ground quickly rather than rolling into it with your upper body. You progressed past two-footed landings a year ago, so land on one. 18 contacts a side, well inside the ≤40 single-leg cap." },
+        /* Single-leg box jump pulled for the bursitis week: single-leg
+           takeoff is the highest Achilles-insertion dose in the block.
+           Jumps return, with Paul Read's tall-and-upright cue, when the
+           sports-med visit clears running. */
         { name:"Deficit rear-foot-elevated split squat", sets:3,
           target:"3 × 6 each @ RPE 7–8", rest:150, suggest:{weight:50, reps:6, rpe:7},
           note:"Start at 45–50 lb — you're doing flat Bulgarians at 50×8–10, and the deficit makes it harder. Stop at the depth where the right knee starts talking rather than chasing the full range." },
@@ -194,8 +199,8 @@ const PROGRAM = {
           target:"3 × 5 each side", rest:90, suggest:{reps:5, rpe:7},
           note:"14 lb ball, as before. Load and explode. This is the only frontal-plane power item in the block and it matters more than it looks — cutting is a lateral action and nothing else here trains it." },
         { name:"Seated calf raise", sets:3, fields:["weight","reps","rpe"],
-          target:"3 × 8–12 @ RPE 8 · 90° gate", rest:90, suggest:{weight:90, reps:10, rpe:8},
-          note:"REPLACES the PT 3×15 today. Bent knee, so this hits soleus where the standing version hit gastroc. Same rule: no dorsiflexion past neutral. Copenhagen is deliberately not here — Mobility Day B already gives you it roughly every other day, which is the trial dose." }
+          target:"3 × 10–12 @ RPE 7–8 · 90° gate", rest:90, suggest:{weight:70, reps:10, rpe:7},
+          note:"REPLACES the PT 3×15 today. Dropped to 70 lb from the ~95 that cramped your right leg and broke form on 14 Aug — find clean reps first, then climb back. Bent knee, so this hits soleus where the standing version hit gastroc. Same rules as the standing version: no dorsiflexion past neutral, and stop at the first hint of the left-heel bursitis spot. Copenhagen is deliberately not here — Mobility Day B already gives you it roughly every other day." }
       ]
     },
 
@@ -227,11 +232,11 @@ const PROGRAM = {
       id: "c-cod",
       name: "C2 · Change of direction",
       accent: "#6FAF9F", unit: "drill", cat: "cardio",
-      sub: "First cutting since you stopped playing. Everything at 60–70% — this is a technique day wearing a conditioning day's clothes.",
+      sub: "ON HOLD until the sports-med visit clears running — this is the session the bursitis flared after. Kept for when cutting comes back.",
       exercises: [
         { name:"Easy continuous run", sets:1, fields:["distance","duration","rpe"],
           target:"8 min easy · RPE 4–5", warmup:true, suggest:{duration:"8:00", rpe:4},
-          note:"Half-height heel lifts from here on — this is the moderate-load stage in Pringels' schedule. Watch tomorrow's stiffness number carefully; it is the first day of the wean that actually tests anything." },
+          note:"FULL-height heel lifts — the wean is scrapped until the doctor says otherwise." },
         { name:"A-skips", sets:2, fields:["distance","rpe"], target:"2 × 20 m", warmup:true, rest:30,
           suggest:{distance:20, rpe:3} },
         { name:"Dribble technique", sets:3, fields:["distance","rpe"],
@@ -254,14 +259,51 @@ const PROGRAM = {
 
     /* ---------------------------------------------------------------- */
     {
+      id: "c-bike",
+      name: "C3 · Bike tempo intervals",
+      accent: "#5B8FC9", unit: "drill", cat: "cardio",
+      sub: "The MAS tempo day moved onto the bike — same engine work, zero load through the left heel.",
+      exercises: [
+        { name:"Easy spin", sets:1, fields:["duration","rpe"],
+          target:"5 min easy · RPE 4", warmup:true, suggest:{duration:"5:00", rpe:4},
+          note:"Seat high enough that the ankle stays quiet — push through the mid-foot, not the toes." },
+        { name:"Bike tempo interval", sets:4, fields:["duration","rpe"],
+          target:"4 × 2 min hard @ RPE 7 · 2 min easy spin between", rest:120,
+          suggest:{duration:"2:00", rpe:7},
+          note:"Same effort rule as the running version: a pace you could just about hold for six minutes flat out. If rep 4 lands at RPE 8+, that is the data — do not add a fifth. A spin class is an accepted substitute for this whole session: log it as one entry with the class length and an overall RPE. A rower works too, but only with a shortened catch — the full catch is a deep-dorsiflexion position, which is exactly what the bursa hates." },
+        { name:"Easy spin down", sets:1, fields:["duration","rpe"],
+          target:"3–5 min easy", suggest:{duration:"3:00", rpe:3} }
+      ]
+    },
+
+    /* ---------------------------------------------------------------- */
+    {
+      id: "c-bike2",
+      name: "C4 · Bike 30/30s",
+      accent: "#C95B7F", unit: "drill", cat: "cardio",
+      sub: "The grid day's structure, moved onto the bike. No on-feet work at all this week — no dribbling, no shuffling, nothing.",
+      exercises: [
+        { name:"Easy spin", sets:1, fields:["duration","rpe"],
+          target:"5 min easy · RPE 4", warmup:true, suggest:{duration:"5:00", rpe:4} },
+        { name:"Bike 30/30 — hard 30s", sets:8, fields:["duration","rpe"],
+          target:"30 s hard / 30 s easy × 4 reps × 2 sets", rest:180,
+          suggest:{duration:"0:30", rpe:8},
+          note:"Log the hard 30s only — 8 rows, 4 per set, 3 min easy spinning between sets. Same shape as the grass grids, so the aerobic thread of the block doesn't drop. If you'd rather do a METCON for variety, the constraint is absolute: nothing airborne — no jumps, no skipping, no burpees, no running — and nothing that dorsiflexes the left ankle under load." },
+        { name:"Easy spin down", sets:1, fields:["duration","rpe"],
+          target:"3–5 min easy", suggest:{duration:"3:00", rpe:3} }
+      ]
+    },
+
+    /* ---------------------------------------------------------------- */
+    {
       id: "c-tempo",
       name: "C3 · MAS tempo intervals",
       accent: "#5B8FC9", unit: "drill", cat: "cardio",
-      sub: "The session that matters most — and the one that measures your MAS without a test.",
+      sub: "ON HOLD until the sports-med visit clears running. Still the session that will measure your MAS when it returns.",
       exercises: [
         { name:"Easy continuous run", sets:1, fields:["distance","duration","rpe"],
           target:"5 min easy · RPE 4", warmup:true, suggest:{duration:"5:00", rpe:4},
-          note:"Half-height heel lifts." },
+          note:"FULL-height heel lifts." },
         { name:"Forward extensive pogos", sets:2, fields:["distance","rpe"],
           target:"2 × 10 reps", warmup:true, rest:30, suggest:{rpe:4} },
         { name:"Strides", sets:3, fields:["distance","rpe"],
@@ -278,11 +320,11 @@ const PROGRAM = {
       id: "c-grid",
       name: "C4 · Grids + COD",
       accent: "#C95B7F", unit: "drill", cat: "cardio",
-      sub: "The hardest conditioning day, and the last before travel. Capped on purpose.",
+      sub: "ON HOLD until the sports-med visit clears running — wickets and accel-stops are exactly the loads the bursitis vetoes.",
       exercises: [
         { name:"Easy continuous run", sets:1, fields:["distance","duration","rpe"],
           target:"5 min easy · RPE 4", warmup:true, suggest:{duration:"5:00", rpe:4},
-          note:"Half-height heel lifts." },
+          note:"FULL-height heel lifts." },
         { name:"Strides", sets:3, fields:["distance","rpe"],
           target:"3 × 40 m @ 75%", warmup:true, rest:60, suggest:{distance:40, rpe:6} },
         { name:"MAS grid — hard 30s", sets:8, fields:["distance","duration","rpe"],

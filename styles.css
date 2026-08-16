@@ -228,9 +228,14 @@ button{font:inherit;color:inherit;background:none;border:none;cursor:pointer}
    on a narrow phone. */
 .lift-ex{border-top:1px solid var(--line);padding:16px 0 4px}
 .lift-ex:first-child{border-top:none;padding-top:0}
-.lift-head{display:flex;align-items:baseline;justify-content:space-between;gap:8px}
-.lift-head .nm{font-weight:700;font-size:16px;letter-spacing:-.01em}
+.lift-head{display:flex;align-items:baseline;gap:6px}
+.lift-head .nm{font-weight:700;font-size:16px;letter-spacing:-.01em;margin-right:auto;text-align:left}
 .exdel{color:var(--dimmer);font-size:14px;padding:2px 6px;line-height:1}
+/* per-exercise controls: local lb⇄kg override + reorder */
+.exunit{border:1px solid var(--line);background:var(--panel);border-radius:999px;
+  padding:3px 9px;font-size:10.5px;font-weight:650;color:var(--dim)}
+.exmove{color:var(--dimmer);font-size:11px;padding:3px 5px;line-height:1}
+.exmove:disabled{opacity:.25}
 .histline{color:var(--dimmer);font-size:11px;margin-top:4px}
 /* --nf is the number of declared fields (2 or 3), set inline per row, so a
    running interval (dist/time/rpe) and an isometric hold (time/rpe) lay out
@@ -238,8 +243,12 @@ button{font:inherit;color:inherit;background:none;border:none;cursor:pointer}
 .sethead,.setrow{display:grid;
   grid-template-columns:22px minmax(58px,1.2fr) repeat(var(--nf,3),minmax(0,1fr)) 38px;
   gap:5px;align-items:center}
-.sethead{margin-top:10px;font-size:9.5px;letter-spacing:.1em;color:var(--dimmer);
-  text-transform:uppercase;white-space:nowrap;overflow:hidden}
+.sethead{margin-top:10px;font-size:9.5px;letter-spacing:.08em;color:var(--dimmer);
+  text-transform:uppercase;white-space:nowrap}
+/* each header cell clips itself, centred over its input, so a long label
+   ("WEIGHT (LB)") ellipses instead of running into the next column */
+.sethead>div{overflow:hidden;text-overflow:ellipsis;text-align:center;min-width:0}
+.sethead .sn,.sethead .prev{text-align:left}
 .setrow{margin-top:6px}
 .setrow .sn{font-size:13px;color:var(--dim);font-variant-numeric:tabular-nums}
 .setrow .prev{font-size:10.5px;color:var(--dimmer);font-variant-numeric:tabular-nums;

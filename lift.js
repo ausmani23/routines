@@ -16,7 +16,7 @@
 /* ---------- shape of the stored log ----------
    db.strength.sessions: newest last.
      { w, sid, block, week, start, end, note, mins, exNotes,
-       sets:[{ex, n, weight, reps, distance, duration, rpe}] }
+       sets:[{ex, n, weight, height, reps, distance, duration, rpe}] }
    `sid` is the schedule slot it was logged against (see schedule.js) and may
    be absent — sessions logged before the calendar existed simply lack it, and
    anything opened from Browse has no slot to record.
@@ -44,6 +44,7 @@ function sessions(){ return (db.strength && db.strength.sessions) || []; }
    show MINUTES / PAIN over duration / rpe). */
 const FIELDS = {
   weight:   { label:"WEIGHT", ph:"wt",   mode:"decimal" },
+  height:   { label:"HEIGHT", ph:"cm",   mode:"numeric" },   // box height — cm, never unit-converted
   reps:     { label:"REPS",   ph:"reps", mode:"numeric" },
   distance: { label:"DIST",   ph:"m",    mode:"decimal" },
   duration: { label:"TIME",   ph:"m:ss", mode:"text"    },
@@ -58,29 +59,41 @@ function fieldPh(e,k){ return (e.phs && e.phs[k]) || FIELDS[k].ph; }
    Canonical weight is lbs, always — the log, the export and `suggest` never
    change meaning when the toggle flips. kg exists only in what the weight
    fields show and accept, so he can flip mid-workout in a kg gym and every
-   number (prev column, proposals, already-typed sets) converts in place. */
+   number (prev column, proposals, already-typed sets) converts in place.
+
+   The global toggle is db.unit; a single lift can override it for the session
+   (a kg-plated barbell in an otherwise-lb gym) via lift.exUnit[ei]. wOut/wIn
+   take an explicit kg flag so per-exercise contexts pass their own; omitted,
+   they follow the global toggle. */
 const LB_PER_KG = 2.20462;
 function unitKg(){ return db.unit === "kg"; }
-function wOut(v){                       // canonical lbs → what the field shows
+function exKg(ei){
+  const u = lift.exUnit && lift.exUnit[ei];
+  return u ? u === "kg" : unitKg();
+}
+function wOut(v, kg){                   // canonical lbs → what the field shows
   const n = parseFloat(v);
   if(v == null || v === "" || isNaN(n)) return v == null ? "" : String(v);
-  return unitKg() ? String(Math.round(n/LB_PER_KG*10)/10) : String(v);
+  if(kg === undefined) kg = unitKg();
+  return kg ? String(Math.round(n/LB_PER_KG*10)/10) : String(v);
 }
-function wIn(v){                        // what was typed → canonical lbs
+function wIn(v, kg){                    // what was typed → canonical lbs
   const n = parseFloat(v);
   if(v === "" || isNaN(n)) return v;
-  return unitKg() ? String(Math.round(n*LB_PER_KG*10)/10) : v;
+  if(kg === undefined) kg = unitKg();
+  return kg ? String(Math.round(n*LB_PER_KG*10)/10) : v;
 }
 function paintUnit(){ const b=$("#lUnit"); if(b) b.textContent = unitKg() ? "kg" : "lb"; }
 
 /* One previous set, rendered for the PREV column. Weight+reps get the familiar
    "225×8" treatment; everything else is joined plainly. */
-function fmtPrev(e, p){
+function fmtPrev(e, p, kg){
   if(!p) return "—";
   const f = exFields(e), out = [];
-  if(f.includes("weight") && f.includes("reps")) out.push(`${p.weight?wOut(p.weight):"bw"}×${p.reps||"—"}`);
-  else if(f.includes("weight") && p.weight) out.push(wOut(p.weight));
+  if(f.includes("weight") && f.includes("reps")) out.push(`${p.weight?wOut(p.weight,kg):"bw"}×${p.reps||"—"}`);
+  else if(f.includes("weight") && p.weight) out.push(wOut(p.weight,kg));
   else if(f.includes("reps") && p.reps) out.push(p.reps);
+  if(f.includes("height") && p.height) out.push(`${p.height}cm`);
   if(f.includes("distance") && p.distance) out.push(`${p.distance}m`);
   if(f.includes("duration") && p.duration) out.push(p.duration);
   /* "/" not " · ": this column is ~70px on a phone and a run needs to fit
@@ -167,7 +180,36 @@ function workoutCardHTML(w, opts){
    "exIndex|setIndex" and is the single source of truth for what is typed —
    the DOM is rebuilt from it on every structural change. A rendered proposal
    is NOT in `entries`; only typing or ticking puts it there. */
-let lift = { w:null, sid:null, ex:[], entries:{}, exNotes:{}, histOpen:{}, startedAt:0 };
+let lift = { w:null, sid:null, ex:[], entries:{}, exNotes:{}, exUnit:{}, histOpen:{}, startedAt:0 };
+
+/* ---------- draft persistence ----------
+   Everything typed mid-session is mirrored into db.liftDraft on every input,
+   keyed by workout+slot, and restored when the same session is reopened. This
+   is what actually fixes "my notes vanished": Back, a reload, or iOS evicting
+   the PWA mid-workout no longer discards anything. finishLift clears the
+   draft; stale drafts fall off after a week. */
+function draftKey(){ return lift.w ? `${lift.w.id}|${lift.sid||""}` : null; }
+function saveLiftDraft(){
+  const k = draftKey(); if(!k) return;
+  db.liftDraft = db.liftDraft || {};
+  db.liftDraft[k] = {
+    ex: lift.ex, entries: lift.entries, exNotes: lift.exNotes, exUnit: lift.exUnit,
+    note: $("#lNote") ? $("#lNote").value : "",
+    dur: $("#lDur") ? $("#lDur").value : "",
+    startedAt: lift.startedAt, savedAt: Date.now()
+  };
+  saveDB();
+}
+function clearLiftDraft(){
+  const k = draftKey();
+  if(k && db.liftDraft && db.liftDraft[k]){ delete db.liftDraft[k]; saveDB(); }
+}
+function pruneLiftDrafts(){
+  if(!db.liftDraft) return;
+  Object.keys(db.liftDraft).forEach(k=>{
+    if(Date.now() - (db.liftDraft[k].savedAt||0) > 7*DAY) delete db.liftDraft[k];
+  });
+}
 
 /* `sid` is the scheduled slot this was opened from, so the same workout on two
    different days ticks off independently. Null when opened from Browse. */
@@ -175,17 +217,28 @@ function openLift(id, sid){
   const w = PROGRAM.workouts.find(x=>x.id===id); if(!w) return;
   lift.w = w;
   lift.sid = sid || null;
-  lift.ex = (w.exercises||[]).map(e=>Object.assign({}, e, {sets:e.sets||3}));
-  lift.entries = {};
-  lift.exNotes = {};
+  pruneLiftDrafts();
+  const draft = db.liftDraft && db.liftDraft[`${w.id}|${sid||""}`];
+  if(draft){
+    lift.ex = draft.ex;
+    lift.entries = draft.entries || {};
+    lift.exNotes = draft.exNotes || {};
+    lift.exUnit = draft.exUnit || {};
+    lift.startedAt = draft.startedAt || Date.now();
+  }else{
+    lift.ex = (w.exercises||[]).map(e=>Object.assign({}, e, {sets:e.sets||3}));
+    lift.entries = {};
+    lift.exNotes = {};
+    lift.exUnit = {};
+    lift.startedAt = Date.now();
+  }
   lift.histOpen = {};
-  lift.startedAt = Date.now();
   if(typeof setNoteCtx === "function") setNoteCtx({ kind:"workout", id:w.id, name:w.name });
   document.documentElement.style.setProperty("--signal", w.accent||"#C97F5B");
   $("#lName").textContent = w.name;
   $("#lSub").textContent = w.sub || "";
-  $("#lNote").value = "";
-  const dur = $("#lDur"); if(dur) dur.value = "";
+  $("#lNote").value = draft ? (draft.note||"") : "";
+  const dur = $("#lDur"); if(dur) dur.value = draft ? (draft.dur||"") : "";
   /* Surface last time's session note on the way in — a note you can't ever
      see again is a note that "didn't save". */
   const last = lastSession(w.id), lp = $("#lPrev");
@@ -251,11 +304,12 @@ function sparkHTML(vals){
   return `<svg class="spark" viewBox="0 0 ${W} ${H}" preserveAspectRatio="none"
     aria-hidden="true"><polyline points="${pts.join(" ")}"/></svg>`;
 }
-function histHTML(e){
+function histHTML(e, kg){
   const days = historyFor(e.name);
   if(!days.length) return `<div class="hist">No logged history for this lift yet —
     it starts filling in the first time you log it (or import your Hevy CSV on the Notes screen).</div>`;
-  const u = unitKg() ? "kg" : "lb";
+  if(kg === undefined) kg = unitKg();
+  const u = kg ? "kg" : "lb";
   /* best weight for each rep count, and the best estimated 1RM overall */
   const repBest = {};
   let best = null;
@@ -264,13 +318,13 @@ function histHTML(e){
     if(!best || e1rm(s.w,s.r) > e1rm(best.w,best.r)) best = s;
   }));
   const recs = Object.keys(repBest).map(Number).sort((a,b)=>a-b).slice(0,12)
-    .map(r=>`<span><b>${r}</b> × ${wOut(repBest[r])}</span>`).join("");
+    .map(r=>`<span><b>${r}</b> × ${wOut(repBest[r],kg)}</span>`).join("");
   const trend = days.map(day=>Math.max(...day.sets.map(s=>e1rm(s.w,s.r))));
   const recent = days.slice(-3).reverse().map(day=>
-    `<div class="hist-day"><s>${day.d}</s> ${day.sets.map(s=>`${wOut(s.w)}×${s.r}`).join(", ")}</div>`).join("");
+    `<div class="hist-day"><s>${day.d}</s> ${day.sets.map(s=>`${wOut(s.w,kg)}×${s.r}`).join(", ")}</div>`).join("");
   return `<div class="hist">
-    <div class="big">Est. 1RM <b>${wOut(Math.round(e1rm(best.w,best.r)))} ${u}</b>
-      <s>from ${wOut(best.w)}×${best.r} · ${days.length} session${days.length>1?"s":""}</s></div>
+    <div class="big">Est. 1RM <b>${wOut(Math.round(e1rm(best.w,best.r)),kg)} ${u}</b>
+      <s>from ${wOut(best.w,kg)}×${best.r} · ${days.length} session${days.length>1?"s":""}</s></div>
     ${sparkHTML(trend)}
     <p class="hist-cap">Best weight per rep count (${u})</p>
     <div class="reprec">${recs}</div>
@@ -282,6 +336,7 @@ function renderLift(){
   $("#lBody").innerHTML = lift.ex.map((e,ei)=>{
     const hist = lastSetsFor(e.name);
     const f = exFields(e);
+    const kg = exKg(ei);
     /* `target` overrides the composed line — a run's prescription ("2 min @
        RPE 7") doesn't decompose into reps/rpe/load the way a lift's does. */
     const target = e.target || [e.reps?`${e.reps} reps`:"", e.rpe?`RPE ${e.rpe}`:"", e.load||""]
@@ -293,7 +348,7 @@ function renderLift(){
         const meta = FIELDS[k];
         const typed = en[k]||"", sugg = suggestFor(e,k,p);
         const raw = typed || sugg;
-        const shown = k==="weight" ? wOut(raw) : raw;
+        const shown = k==="weight" ? wOut(raw, kg) : raw;
         const ph = (p && p[k]) || fieldPh(e,k);
         return `<input class="fld${!typed && sugg ? " sugg":""}" data-e="${ei}" data-s="${si}" data-k="${k}"
           inputmode="${meta.mode}" placeholder="${esc(ph)}" value="${esc(shown)}"
@@ -301,7 +356,7 @@ function renderLift(){
       }).join("");
       return `<div class="setrow${en.done?" logged":""}" style="--nf:${f.length}">
         <div class="sn">${si+1}</div>
-        <div class="prev">${esc(fmtPrev(e,p))}</div>
+        <div class="prev">${esc(fmtPrev(e,p,kg))}</div>
         ${inputs}
         <button class="tick-set" data-done="${ei}|${si}" aria-pressed="${!!en.done}">✓</button>
       </div>`;
@@ -310,18 +365,21 @@ function renderLift(){
     const heads = f.map(k=>{
       const lbl = fieldLabel(e,k);
       return (k==="weight" && !(e.labels && e.labels.weight))
-        ? `${esc(lbl)} · ${unitKg()?"KG":"LB"}` : esc(lbl);
+        ? `${esc(lbl)} (${kg?"KG":"LB"})` : esc(lbl);
     });
     return `<div class="lift-ex">
       <div class="lift-head">
         <button class="nm" data-hist="${ei}" aria-expanded="${!!lift.histOpen[ei]}">${esc(e.name)}${e.warmup?` <span class="badge opt">warm-up</span>`:""}<s class="histgo">${lift.histOpen[ei]?"▾":"▸"}</s></button>
+        ${f.includes("weight")?`<button class="exunit" data-unit="${ei}" aria-label="Units for ${esc(e.name)}">${kg?"kg":"lb"}</button>`:""}
+        <button class="exmove" data-move="${ei}|-1" aria-label="Move ${esc(e.name)} up"${ei===0?" disabled":""}>▲</button>
+        <button class="exmove" data-move="${ei}|1" aria-label="Move ${esc(e.name)} down"${ei===lift.ex.length-1?" disabled":""}>▼</button>
         ${e.added?`<button class="exdel" data-del="${ei}" aria-label="Remove ${esc(e.name)}">✕</button>`:""}
       </div>
       ${target?`<div class="dose">${esc(target)}</div>`:""}
       ${e.note?`<div class="cue">${esc(e.note)}</div>`:""}
       ${hist?`<div class="histline">Last time · ${fmtLast(dayOf(hist.when))}</div>`:""}
       ${prevNote?`<div class="cue exn-prev">Last note · ${esc(prevNote)}</div>`:""}
-      ${lift.histOpen[ei]?histHTML(e):""}
+      ${lift.histOpen[ei]?histHTML(e,kg):""}
       <div class="sethead" style="--nf:${f.length}"><div class="sn">SET</div><div class="prev">PREV</div>
         ${heads.map(h=>`<div>${h}</div>`).join("")}<div></div></div>
       ${rows}
@@ -338,15 +396,40 @@ function renderLift(){
   $("#lBody").querySelectorAll(".fld").forEach(el=>{
     el.oninput = ()=>{
       const k = el.dataset.k, v = el.value.trim();
-      entry(+el.dataset.e, +el.dataset.s)[k] = (k==="weight") ? wIn(v) : v;
+      entry(+el.dataset.e, +el.dataset.s)[k] = (k==="weight") ? wIn(v, exKg(+el.dataset.e)) : v;
       el.classList.remove("sugg");
+      saveLiftDraft();
     };
+    /* A proposal clears the moment the field is tapped so there is nothing to
+       delete before typing; leave without typing and it comes straight back. */
+    if(el.tagName === "INPUT"){
+      el.onfocus = ()=>{
+        if(el.classList.contains("sugg")){ el.dataset.sugg = el.value; el.value = ""; }
+      };
+      el.onblur = ()=>{
+        if(el.dataset.sugg !== undefined){
+          if(el.value.trim() === ""){ el.value = el.dataset.sugg; el.classList.add("sugg"); }
+          delete el.dataset.sugg;
+        }
+      };
+    }
+  });
+  $("#lBody").querySelectorAll("[data-unit]").forEach(el=>{
+    el.onclick = ()=>{
+      const ei = +el.dataset.unit;
+      lift.exUnit[ei] = exKg(ei) ? "lb" : "kg";
+      saveLiftDraft();
+      renderLift();
+    };
+  });
+  $("#lBody").querySelectorAll("[data-move]").forEach(el=>{
+    el.onclick = ()=>{ const [ei,dir] = el.dataset.move.split("|").map(Number); moveExercise(ei,dir); };
   });
   $("#lBody").querySelectorAll("[data-done]").forEach(el=>{
     el.onclick = ()=>{ const [ei,si] = el.dataset.done.split("|").map(Number); toggleSet(ei,si); };
   });
   $("#lBody").querySelectorAll("[data-add]").forEach(el=>{
-    el.onclick = ()=>{ lift.ex[+el.dataset.add].sets++; renderLift(); };
+    el.onclick = ()=>{ lift.ex[+el.dataset.add].sets++; saveLiftDraft(); renderLift(); };
   });
   $("#lBody").querySelectorAll("[data-del]").forEach(el=>{
     el.onclick = ()=>{ removeExercise(+el.dataset.del); };
@@ -355,8 +438,10 @@ function renderLift(){
     el.onclick = ()=>{ const i=+el.dataset.hist; lift.histOpen[i]=!lift.histOpen[i]; renderLift(); };
   });
   $("#lBody").querySelectorAll(".exnote").forEach(el=>{
-    el.oninput = ()=>{ lift.exNotes[+el.dataset.xn] = el.value; };
+    el.oninput = ()=>{ lift.exNotes[+el.dataset.xn] = el.value; saveLiftDraft(); };
   });
+  const ln = $("#lNote"); if(ln) ln.oninput = saveLiftDraft;
+  const ld = $("#lDur"); if(ld) ld.oninput = saveLiftDraft;
   $("#exAdd").onclick = addExercise;
   $("#exName").onkeydown = e => { if(e.key==="Enter"){ e.preventDefault(); addExercise(); } };
   const n = loggedSets().length;
@@ -372,8 +457,32 @@ function toggleSet(ei,si){
   const p = setAt(lastSetsFor(e.name), si+1);
   exFields(e).forEach(k=>{ const s = suggestFor(e,k,p); if(!en[k] && s) en[k] = s; });
   en.done = true;
+  saveLiftDraft();
   renderLift();
   ping(760,.09,.18);
+}
+
+/* Reordering swaps every index-keyed map along with the exercises themselves,
+   or typed numbers, notes and unit overrides would re-attach to the wrong
+   lift — same discipline as removeExercise below. */
+function moveExercise(ei, dir){
+  const j = ei + dir;
+  if(j < 0 || j >= lift.ex.length) return;
+  [lift.ex[ei], lift.ex[j]] = [lift.ex[j], lift.ex[ei]];
+  const remap = i => i===ei ? j : i===j ? ei : i;
+  const entries = {};
+  Object.keys(lift.entries).forEach(k=>{
+    const [e,s] = k.split("|").map(Number);
+    entries[`${remap(e)}|${s}`] = lift.entries[k];
+  });
+  lift.entries = entries;
+  [lift.exNotes, lift.exUnit, lift.histOpen] = [lift.exNotes, lift.exUnit, lift.histOpen].map(o=>{
+    const next = {};
+    Object.keys(o).forEach(k=>{ next[remap(+k)] = o[k]; });
+    return next;
+  });
+  saveLiftDraft();
+  renderLift();
 }
 
 function addExercise(){
@@ -381,6 +490,7 @@ function addExercise(){
   if(!name) return;
   lift.ex.push({ name, sets:3, added:true });
   el.value = "";
+  saveLiftDraft();
   renderLift();
   const cards = $("#lBody").querySelectorAll(".lift-ex");
   if(cards.length) cards[cards.length-1].scrollIntoView({block:"center"});
@@ -404,7 +514,15 @@ function removeExercise(ei){
     notes[e>ei?e-1:e] = lift.exNotes[k];
   });
   lift.exNotes = notes;
+  const units = {};
+  Object.keys(lift.exUnit).forEach(k=>{
+    const e = +k;
+    if(e === ei) return;
+    units[e>ei?e-1:e] = lift.exUnit[k];
+  });
+  lift.exUnit = units;
   lift.histOpen = {};
+  saveLiftDraft();
   renderLift();
 }
 
@@ -449,6 +567,7 @@ function finishLift(){
     db.strength.sessions.push(s);
     saveDB();
   }
+  clearLiftDraft();
   showDone(lift.w.name,
     sets.length ? `${sets.length} sets logged${mins>0?` · ${mins} min`:""}.` : "Nothing logged — session discarded.",
     sets.length ? "Ready for Sunday." : "");
@@ -465,7 +584,8 @@ function finishLift(){
 function fmtLoggedSet(x){
   const has = k => x[k] != null && x[k] !== "";
   const out = [];
-  if(has("weight") || has("reps")) out.push(`${x.weight||"bw"}×${has("reps")?x.reps:"?"}`);
+  if(has("weight") || (has("reps") && !has("height"))) out.push(`${x.weight||"bw"}×${has("reps")?x.reps:"?"}`);
+  if(has("height")) out.push(`${x.height} cm${has("reps")?` × ${x.reps}`:""}`);
   if(has("distance")) out.push(`${x.distance} m`);
   if(has("duration")) out.push(has("distance") ? `in ${x.duration}` : x.duration);
   return (out.join(" ") || "—") + (has("rpe") ? ` @${x.rpe}` : "");

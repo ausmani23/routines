@@ -54,15 +54,23 @@ const ROUTINES = [
   id:"hips", name:"Morning — hip opener", short:"Hips", accent:"#9BB8D3", sched:{freq:"daily"},
   sub:"First thing on waking, before you load the spine. Everything here moves — ease in and out of each position, never hang at end range.",
   blocks:[
-    {name:"Cat–cow", badge:"req", mode:"time", sec:60, dose:"60 sec · slow, breath-led",
+    {group:"Round one", name:"Cat–cow", badge:"req", mode:"time", sec:60, dose:"60 sec · slow, breath-led",
      detail:"On hands and knees, wrists under shoulders, knees under hips. INHALE: drop the belly, lift the chest and tailbone, look gently up. EXHALE: press the floor away, round the whole spine toward the ceiling, tuck the chin and tailbone. Let each breath set the pace — one full breath per arch-and-round.",
      cue:"The wake-up call for the spine. After a night curled up, this is the gentlest way to take every segment through flexion and extension before anything bears load."},
     {name:"Dynamic supine twist", mode:"time", sec:90, dose:"90 sec · alternating sides",
      detail:"On your back, arms out in a T, knees bent, feet flat. Let both knees fall slowly toward the floor on one side while your head turns the other way. Pause one breath at the bottom, then draw them up through center and straight over to the other side. One continuous slow pendulum for the whole 90 seconds.",
      cue:"Rotation is the range the night takes away first. One continuous movement — not a held left, then a held right — is what teaches the back it's safe."},
-    {name:"Half-kneeling lunge", badge:"req", mode:"time", sec:45, sides:2, sets:3, dose:"45 sec each side × 3, rocking",
+    {name:"Half-kneeling lunge", badge:"req", mode:"time", sec:45, sides:2, dose:"45 sec each side, rocking",
      detail:"Kneel on one knee (pad it if you like), front foot flat, torso tall. FIRST tuck the pelvis under — think belt buckle up toward the ribs — and squeeze the glute on the kneeling side. Keeping that, rock gently forward for 2–3 seconds until the front of the kneeling-side hip lengthens, then rock back. Repeat, breathing out on each rock forward.",
-     cue:"Your favorite for a reason — it hits exactly where the night leaves you tight. The glute squeeze is what makes it work: without it you arch the low back instead of lengthening the psoas. Three rounds a side now: the routine is down to what actually earns its place, so this gets the time back."}
+     cue:"Your favorite for a reason — it hits exactly where the night leaves you tight. The glute squeeze is what makes it work: without it you arch the low back instead of lengthening the psoas."},
+    {group:"Round two", name:"Cat–cow", tag:"2nd round", badge:"req", mode:"time", sec:60, dose:"60 sec · slow, breath-led",
+     cue:"Same as before, a little deeper now that the spine has warmed to the idea."},
+    {name:"Dynamic supine twist", tag:"2nd round", mode:"time", sec:90, dose:"90 sec · alternating sides",
+     cue:"The second pass is where the range actually shows up. Same slow pendulum."},
+    {name:"Half-kneeling lunge", tag:"2nd round", badge:"req", mode:"time", sec:45, sides:2, dose:"45 sec each side, rocking",
+     cue:"Tuck first, then rock. The hip should give noticeably more than it did in round one."},
+    {group:"Final lunge", name:"Half-kneeling lunge", tag:"final round", badge:"req", mode:"time", sec:45, sides:2, dose:"45 sec each side, rocking",
+     cue:"The closer. Three rounds a side in total — same dose as before, now spread through the routine so each pass finds a looser hip."}
   ]
 },
 {
@@ -144,6 +152,10 @@ const ROUTINES = [
      dose:"8 reps, hold 3 sec each",
      detail:"Sitting or standing tall. Without nodding up or down, glide the chin straight back — think double chin — until the back of the neck feels long. Hold 3 seconds, release gently. The movement is small and horizontal; if something is nodding, it's too big.",
      cue:"The direct antidote to the hunch: forward-head sitting puts the traps and levator on duty all day holding the head up, and that overworked corner is what keeps tweaking. This wakes the deep neck muscles that should be doing the job. A small daily dose beats stretching it after it's already angry."},
+
+    {name:"Toe sit with neck turns", badge:"new", mode:"time", sec:60, dose:"60 sec · slow turns",
+     detail:"Kneel and sit back onto your heels with the toes tucked under, torso tall, hands resting on the thighs. Settle as much weight into the heels as the feet allow. From there, turn the head slowly to look over one shoulder, pause a breath, then over the other — smooth, unhurried turns for the whole minute. If the toes are too intense, tuck only as far as they tolerate and build up.",
+     cue:"Your own invention, and a good two-for-one: the sit takes the knees to deep flexion and loads the toes and arches, while the head turns work the neck rotation the desk steals. Ease off the depth rather than the time if the knees complain."},
 
     {name:"Half-kneeling lunge", mode:"time", sec:45, sides:2, dose:"45 sec each side, rocking",
      detail:"Kneel on one knee, front foot flat, torso tall. Tuck the pelvis under, squeeze the glute on the kneeling side, then rock gently forward 2–3 seconds and back. Keep the tuck the whole time.",
@@ -246,7 +258,7 @@ const ROUTINES = [
 
     {name:"Calf raises", badge:"req", mode:"reps", target:"15 reps", sets:3, est:100, defaultLevel:2,
      dose:"3 × 15, 90° gate with the wedge, set 3 at RPE 9",
-     cue:"90° at the ankle only — no dorsiflexion past neutral, wedge in. Alternate straight-knee and bent-knee sets. 3 × 15 is the dose; the levels change how HARD 15 reps are, never how many. If you can grind out 25, you are training calf endurance, not the tendon — add load, don't add reps. First week on a new level, watch the next-morning stiffness rather than chasing RPE 9.",
+     cue:"90° at the ankle only — no dorsiflexion past neutral, wedge in. Alternate straight-knee and bent-knee sets. 3 × 15 is the dose; the levels change how HARD 15 reps are, never how many. If you can grind out 25, you are training calf endurance, not the tendon — add load, don't add reps. First week on a new level, watch the next-morning stiffness rather than chasing RPE 9. Rolling volume: on a gym day the program's loaded raise REPLACES this outright; the day AFTER loaded gym raises, do this but land set 3 at RPE 7, not 9 — same rule as the day after a match.",
      levels:["Both legs, bodyweight. 3 sec up, 3 sec down, full contraction at the top. The floor — drop here on a bad morning.",
              "Single leg, bodyweight, 15 per side. The fallback for a trip where the load didn't come with you: one leg roughly doubles what two legs carry.",
              "Single leg with the ~40 lb load, 15 per side, 3 sec up / 3 sec down, set 3 landing at RPE 9. The RPE is the target; the weight is whatever reaches it.",
@@ -282,9 +294,9 @@ const ROUTINES = [
              "Both feet, then add 10 sec per side single-leg after each set.",
              "Both feet, 15 sec per side single-leg, then a few low forward bounds."]},
 
-    {variant:1, name:"Quad tendon loading", badge:"new", mode:"time", sec:45, sets:2,
-     dose:"2 × 45 sec, ~70% effort",
-     cue:"For the right knee. Fingertip tenderness at the top-outer corner of the kneecap is the vastus lateralis part of the quad tendon insertion — so load the quad, don't chase the IT band. Rule: pain ≤3–4/10 while loading and back to normal next morning means keep going. Over that twice in a week, drop a level for a week.",
+    {variant:1, name:"Quad tendon loading", badge:"new", mode:"time", sec:45,
+     dose:"45 sec, ~70% effort · set 1 of 2",
+     cue:"For the right knee. Fingertip tenderness at the top-outer corner of the kneecap is the vastus lateralis part of the quad tendon insertion — so load the quad, don't chase the IT band. Rule: pain ≤3–4/10 while loading and back to normal next morning means keep going. Over that twice in a week, drop a level for a week. The second set comes after the balance work — the gap between them is deliberate.",
      levels:["Wall sit, back flat on the wall, thighs around 60° — shallower if the knee grumbles. Both feet.",
              "Band looped behind the knees, Spanish-squat style, torso upright.",
              "Single-leg wall sit, or a split-squat hold with the back foot on a chair.",
@@ -293,7 +305,15 @@ const ROUTINES = [
     {variant:1, name:"Single-leg balance", badge:"opt", mode:"time", sec:30, sides:2,
      dose:"30 sec per side",
      detail:"Stand on one foot, slight knee bend, tripod foot, quiet the wobble.",
-     cue:"Progress: stable floor → towel/pillow → eyes closed. Cheapest ankle-sprain insurance there is, but it also runs in your warm-up — skip it here on a tight day."}
+     cue:"Progress: stable floor → towel/pillow → eyes closed. Cheapest ankle-sprain insurance there is, but it also runs in your warm-up — skip it here on a tight day. Here it earns a second job: the recovery gap between the two wall-sit sets."},
+
+    {variant:1, name:"Quad tendon loading", tag:"2nd round", badge:"new", mode:"time", sec:45,
+     dose:"45 sec, ~70% effort · set 2 of 2",
+     cue:"Set two, recovered rather than straight off the back of set one. Same level, same 70% effort, same pain rule.",
+     levels:["Wall sit, back flat on the wall, thighs around 60° — shallower if the knee grumbles. Both feet.",
+             "Band looped behind the knees, Spanish-squat style, torso upright.",
+             "Single-leg wall sit, or a split-squat hold with the back foot on a chair.",
+             "Move off the isometric: slow split squats or step-downs, 3 sec down / 3 sec up, 3 × 8. Isometrics settle a tendon; heavy slow reps are what rebuild it."]}
   ]
 },
 {

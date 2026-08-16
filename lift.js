@@ -3,10 +3,12 @@
    db / saveDB / go / ping / mmss / $ from there, and on PROGRAM from program.js.
 
    Three things carry the design:
-   - Every field proposes a value before anything is typed: last session's
-     number for that set, else the program's `suggest`. A proposal is rendered
-     dimmed and is NOT logged until the set is ticked or the field edited —
-     the tick is the "did it as written" gesture.
+   - Every field proposes a value before anything is typed: the program's
+     `suggest` (the week's PRESCRIPTION, refreshed each re-program), falling
+     back to last session's number where the program is silent. Last session
+     itself shows in the PREV column. A proposal is rendered dimmed and is NOT
+     logged until the set is ticked or the field edited — the tick is the
+     "did it as written" gesture.
    - Nothing is required. A blank set is simply not logged; the point is a
      record honest enough to program from, not a complete one.
    - Storage is ALWAYS in lbs (mirroring Hevy's weight_lbs column). kg exists
@@ -130,11 +132,14 @@ function lastExNote(name){
   return null;
 }
 
-/* What a field proposes before anything is typed: last session's value for
-   this set number, else the program's `suggest`. Canonical units (lbs). */
+/* What a field proposes before anything is typed: the program's `suggest` —
+   which the weekly re-program sets to THIS week's prescription — and only
+   where the program is silent, last session's value for this set number.
+   The PREV column is where last week lives; the prefill is the ask.
+   Canonical units (lbs). */
 function suggestFor(e, k, p){
-  if(p && p[k]) return String(p[k]);
   if(e.suggest && e.suggest[k] != null) return String(e.suggest[k]);
+  if(p && p[k]) return String(p[k]);
   return "";
 }
 

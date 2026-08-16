@@ -66,10 +66,11 @@
                (only shows when there is no previous value to suggest)
      target    prescription line; overrides the reps/rpe/load composition
      reps, rpe, load   used to compose `target` when `target` is absent
-     suggest   starting values the app proposes in an empty set row, e.g.
-               {weight:265, reps:4, rpe:7} — weight ALWAYS in lbs (storage is
-               lbs; kg is a display toggle). Used only until a real logged
-               session exists; after that, last time's numbers take over.
+     suggest   THE WEEK'S PRESCRIPTION, prefilled (dimmed) in every set row,
+               e.g. {weight:285, reps:4, rpe:7} — weight ALWAYS in lbs
+               (storage is lbs; kg is a display toggle). The Sunday re-program
+               updates these to the progressed numbers; last session's values
+               show in the PREV column and fill only fields the suggest omits.
                Every lift should carry one so no field ever starts blank.
      rest      intended rest between sets, seconds. Documentation only — the
                app no longer runs a rest timer (the Garmin does the timing).
@@ -82,7 +83,7 @@ const PROGRAM = {
   weeks: 2,
   start: "2026-08-12",
   focus: "The back half of the block, re-planned around an acute LEFT retrocalcaneal bursitis that flared after C2: keep every gram of strength, move all conditioning onto the bike, and put nothing through the heel at speed until the sports-med visit.",
-  note: "The bursitis is a compression problem at the same left-heel insertion as the Achilles work, and the treatment is Carolyn's existing rules applied harder: heel elevated, no dorsiflexion past neutral, pain is not productive. So this week: FULL-height heel lifts everywhere — the wean is scrapped, not paused — and no running, jumping, skipping or cutting of any kind until the doctor says otherwise. Lifting continues — and PROGRESSES: each lift's target line is this week's prescription (worked out from last week's RPEs — double progression, add load only where the log earned it), while the dimmed prefill is just last week's numbers, so type the target over it. The two exceptions run the other way on purpose: the quad-tendon and calf items hold flat, because tendon tissue progresses on a weekly clock (≤10%) and the calf's neighbour is the thing that flared. Heavy slow calf work inside the 90° gate stays, capped at RPE 8. One caution: NSAIDs can mask symptoms for a day or two after the course ends, so read the first two clean mornings conservatively. On the two strength days the loaded calf raise still REPLACES the PT 3×15 — one or the other, never both. PT mini-pogos stay paused. Log the check-in every morning, before coffee.",
+  note: "The bursitis is a compression problem at the same left-heel insertion as the Achilles work, and the treatment is Carolyn's existing rules applied harder: heel elevated, no dorsiflexion past neutral, pain is not productive. So this week: FULL-height heel lifts everywhere — the wean is scrapped, not paused — and no running, jumping, skipping or cutting of any kind until the doctor says otherwise. Lifting continues — and PROGRESSES: every set row comes pre-filled with this week's prescription, worked out from last week's RPEs (double progression — load moves only where the log earned it). Do it as written and just tick the set; the PREV column shows what you actually did last time. The quad-tendon and calf items hold flat on purpose: tendon tissue progresses on a weekly clock (≤10%), and the calf's neighbour is the thing that flared. Heavy slow calf work inside the 90° gate stays, capped at RPE 8. One caution: NSAIDs can mask symptoms for a day or two after the course ends, so read the first two clean mornings conservatively. On the two strength days the loaded calf raise still REPLACES the PT 3×15 — one or the other, never both. PT mini-pogos stay paused. Log the check-in every morning, before coffee.",
 
   /* Last tested Aug 2025: 1200 m in 4:26, and the Jul-Oct 2025 templates ran
      100% MAS at 130 m / 30 s → ~4.4 m/s. Discounted to 3.9 for a year without
@@ -152,20 +153,20 @@ const PROGRAM = {
            stretch-shortening under load is exactly the stimulus on pause.
            It returns, same name and suggest, when running is cleared. */
         { name:"Deadlift", sets:4,
-          target:"4 × 4 @ RPE 7 · 285 lb — up from 275", rest:180, suggest:{weight:285, reps:4, rpe:7},
-          note:"PROGRESSION: last week was 275 across at RPE 7 with only the final set touching 8 — that is an earned jump, so type 285 over the prefill (the app proposes last week's numbers; the target line is this week's ask). ~3.5%, the standard move for a lift this size, and still under your 285×8 @8 from 25 July. Same rule as ever: every set finishes with reps in the tank." },
+          target:"4 × 4 @ RPE 7 · 285 lb", rest:180, suggest:{weight:285, reps:4, rpe:7},
+          note:"Bar over mid-foot, hinge down to it with a long spine, lats set before the pull. Push the floor away and finish tall — no jerking it off the floor, no ramming the lockout. Reset your brace every rep. Every set ends with reps in the tank. (285 is this week's earned jump from 275 — last week ran RPE 7 across — and still sits under your 285×8 from July.)" },
         { name:"DB bench press", sets:4,
-          target:"4 × 6–8 @ RPE 7–8 · 55s — up from 50s", rest:120, suggest:{weight:55, reps:6, rpe:7},
-          note:"PROGRESSION: you ran the 50s to the top of the range and closed with 10 @9 — the classic double-progression trigger. Take the 55s and reset to the bottom of the range: 4 × 6 is the week-one ask, and you build back to 8s before the next jump. Flat, dumbbells." },
+          target:"4 × 6–8 @ RPE 7–8 · 55s", rest:120, suggest:{weight:55, reps:6, rpe:7},
+          note:"Flat bench. Feet planted, shoulder blades pinched back and tucked under you, and KEEP them there — the elbows track about 45° from the body, never flared to a T. Touch the chest under control, press slightly back toward the face. (The 55s are new — you closed the 50s at 10 @9 — so start at 6s and build back to 8s before the next jump.)" },
         { name:"Chest-supported row", sets:3,
-          target:"3 × 8–10 @ RPE 7 · 65 — up from 60", rest:90, suggest:{weight:65, reps:8, rpe:7},
-          note:"PROGRESSION: 60 ended at 12 reps @9.5, which is a weight that stopped being a prescription and became a suggestion. 65, reset to 8s. Still chest-supported or 1-arm DB, never bent-over — the lumbar spine already worked today. If the gym's DB run makes 65 awkward, this is the day to rotate in the 1-arm row instead." },
+          target:"3 × 8–10 @ RPE 7 · 65", rest:90, suggest:{weight:65, reps:8, rpe:7},
+          note:"Chest GLUED to the pad the whole set — if the torso heaves, the weight is doing the rowing. Pull to the lower ribs, squeeze the blades together for a beat, lower slow. Chest-supported or 1-arm DB with a hand braced, never bent-over: the lumbar spine already worked hard today. (65 now, reset to 8s, after 60 ran away to 12 @9.5.)" },
         { name:"Eccentric leg extension", sets:3, fields:["weight","reps","rpe"],
           target:"3 × 5 each · 4 s down · hold 170", rest:120, suggest:{weight:170, reps:5, rpe:8},
-          note:"DELIBERATELY FLAT: this is the quad-tendon item, and tendon loads progress on a weekly-not-per-session clock (≤10% a week is the rule). Set 3 hit RPE 9 last time — earn 180 by bringing all three sets in at 8 today; if you do, 180 goes in next week. Lower on one leg over 4 seconds, help it up with two. If the top-outer corner of the kneecap complains, shorten the range rather than dropping the weight." },
+          note:"Lift the weight up with BOTH legs, then lower on the right leg alone over a slow, counted 4 seconds — the lowering is the entire exercise, so go heavier than one leg could lift. Full control at the top before each descent. If the top-outer corner of the kneecap complains, shorten the range rather than dropping the weight. (Held at 170 on purpose: tendons progress weekly, not per-session — bring all three sets in at RPE 8 and 180 goes in next week.)" },
         { name:"Standing calf raise", sets:3, fields:["weight","reps","rpe"],
           target:"3 × 8 each @ RPE 7–8 · 90° gate, wedge in · hold 165", rest:90, suggest:{weight:165, reps:8, rpe:7},
-          note:"REPLACES the PT 3×15 today — do not do both. DELIBERATELY FLAT this week: everything else progresses, the calf does not, because the tissue next door is the one that flared. Single leg, wedge under the forefoot, no dorsiflexion past neutral — the 90° gate is exactly what keeps the bursa out of its compression zone, which is why this stays at all. Cap at RPE 7–8; stop at the first hint of the back of the left heel. Same LEG-PRESS sled as 12 Aug (165×8 @8) so the history stays comparable." }
+          note:"Single leg on the LEG-PRESS sled (same machine as 12 Aug so history stays comparable), wedge under the forefoot. Press up smooth over ~3 seconds, lower the same — and STOP at neutral: the heel never drops past 90°, which is exactly what keeps the bursa out of its compression zone. Stop the set at the first hint of the back of the left heel. REPLACES the PT 3×15 today — do not do both. (Held flat this week on purpose: the tissue next door is the one that flared.)" }
       ]
     },
 
@@ -181,26 +182,26 @@ const PROGRAM = {
            Jumps return, with Paul Read's tall-and-upright cue, when the
            sports-med visit clears running. */
         { name:"Deficit rear-foot-elevated split squat", sets:3,
-          target:"3 × 8 each @ RPE 7–8 · same 50 lb, two more reps", rest:150, suggest:{weight:50, reps:8, rpe:7},
-          note:"PROGRESSION BY REPS, not load: 50×6 came in right on target (7.5–8), so the weight stays and the range moves — 8s today. Reps are the gentler lever on a deficit movement the right knee has opinions about. Own 3 × 8 and the next block starts at 55×6. Stop at the depth where the knee starts talking rather than chasing the full range." },
+          target:"3 × 8 each @ RPE 7–8 · 50 lb", rest:150, suggest:{weight:50, reps:8, rpe:7},
+          note:"Back foot laces-down on the bench, front foot on the deficit plate, far enough forward that the shin stays near vertical. Torso tall, drop straight down between the legs — not forward over the knee — and drive up through the whole front foot. Stop at the depth where the right knee starts talking rather than chasing full range. (Progressing by reps: 6s → 8s at the same 50, the gentler lever on a deficit; own 3 × 8 and next block opens at 55×6.)" },
         { name:"Pull-up", sets:3, fields:["reps","rpe"],
-          target:"3 × 7 @ RPE 7–8 · one more rep per set", rest:120, suggest:{reps:7, rpe:7},
-          note:"PROGRESSION: 3 × 6 at RPE 7–8 last time → 3 × 7 today. Bodyweight lifts progress by reps until the top of the range, then load arrives — at 3 × 8 clean, we hang a light DB or a loaded backpack off you, which conveniently also travels." },
+          target:"3 × 7 @ RPE 7–8", rest:120, suggest:{reps:7, rpe:7},
+          note:"Dead hang to start each rep, then set the shoulder blades — down and back — BEFORE the arms bend. Pull the chest toward the bar, no kipping, and control the way down; the negative is half the exercise. (One more rep than last week; at a clean 3 × 8 we hang a DB or loaded backpack off you, which conveniently also travels.)" },
         { name:"Romanian deadlift", sets:3,
-          target:"3 × 6–8 @ RPE 7–8 · 145 — up from 135", rest:150, suggest:{weight:145, reps:6, rpe:7},
-          note:"PROGRESSION: 135×8 at a flat RPE 8 was the deliberately-cautious opener doing its job. 145 and reset toward 6s. For someone pulling 285 off the floor there is a lot of road ahead here — the limiter is hamstring range, not strength, so it climbs ~7% a week rather than leaping. Hips back, spine long, stop when the hamstrings run out of range rather than when the bar reaches the floor." },
+          target:"3 × 6–8 @ RPE 7–8 · 145", rest:150, suggest:{weight:145, reps:6, rpe:7},
+          note:"Hips back, spine long, bar dragging up the thighs, knees soft and FIXED — the knees don't bend further as you descend, the hips just keep travelling back. Stop when the hamstrings run out of range rather than when the bar reaches the floor, and stand up by driving the hips through. (145 now, toward 6s; the limiter here is hamstring range, not strength, so it climbs steadily rather than leaping.)" },
         { name:"Overhead press", sets:3,
-          target:"3 × 6–8 @ RPE 7–8 · 40s — up from 35s", rest:120, suggest:{weight:40, reps:6, rpe:7},
-          note:"PROGRESSION: the 35s closed at 10 reps @9 — found the number, and the number said 'heavier'. 40s, reset to 6. Dumbbells, seated or standing." },
+          target:"3 × 6–8 @ RPE 7–8 · 40s", rest:120, suggest:{weight:40, reps:6, rpe:7},
+          note:"Dumbbells, seated or standing. Ribs DOWN and glutes squeezed before the press — the low back does not arch to finish a rep; if it does, the set is over. Press to a full lockout with the biceps by the ears, lower to the shoulders under control. (40s this week after the 35s closed at 10 @9 — start at 6s.)" },
         { name:"Long-lever hip iso hold", sets:3, fields:["duration","rpe"],
-          target:"3 × 20 s each side — up from 15 s", rest:60, suggest:{duration:"20", rpe:7},
-          note:"PROGRESSION BY TIME: 15 s at RPE 7 across the board → 20 s. Isometrics progress by duration first, load second; the 25 lb DB on the lap comes back when 3 × 25 s is comfortable. Complete all reps on one side before switching." },
+          target:"3 × 20 s each side", rest:60, suggest:{duration:"20", rpe:7},
+          note:"Straight from the ARO program. Leg long, knee locked, toes pulled toward you; hold the heel at the height where the hip flexor burns but the low back stays quiet and pressed down — if the back arches, lower the leg an inch. Complete all holds on one side before switching. (20 s now, up from 15; the 25 lb DB on the lap returns when 3 × 25 s is comfortable.)" },
         { name:"Lateral lunge to med-ball throw", sets:3, fields:["reps","rpe"],
-          target:"3 × 5 each side · throw HARDER, not more", rest:90, suggest:{reps:5, rpe:7},
-          note:"DELIBERATELY FLAT on volume — power work progresses by intent and crispness, not rep count. 14 lb ball; load the lateral lunge deeper and throw meaner. This is the only frontal-plane power item in the block, and with the cutting drills parked it is carrying that whole department." },
+          target:"3 × 5 each side", rest:90, suggest:{reps:5, rpe:7},
+          note:"14 lb ball. Step wide, sit into the outside hip with the trail leg straight — load it like a spring — then drive across and throw as hard as the wall can take. Full reset between reps; this is five explosive singles, not a flow. (Volume held flat on purpose — power progresses by intent and crispness, and with the cutting drills parked this is the only frontal-plane work in the week.)" },
         { name:"Seated calf raise", sets:3, fields:["weight","reps","rpe"],
-          target:"3 × 10–12 @ RPE 7–8 · 90° gate", rest:90, suggest:{weight:70, reps:10, rpe:7},
-          note:"REPLACES the PT 3×15 today. Dropped to 70 lb from the ~95 that cramped your right leg and broke form on 14 Aug — find clean reps first, then climb back. Bent knee, so this hits soleus where the standing version hit gastroc. Same rules as the standing version: no dorsiflexion past neutral, and stop at the first hint of the left-heel bursitis spot. Copenhagen is deliberately not here — Mobility Day B already gives you it roughly every other day." }
+          target:"3 × 10–12 @ RPE 7–8 · 90° gate · 70 lb", rest:90, suggest:{weight:70, reps:10, rpe:7},
+          note:"Knees bent 90°, pad on the thighs, balls of the feet on the platform. Smooth 2–3 seconds up to a full squeeze, same speed down, and STOP at neutral — the heel never drops below the platform. Bent knee puts this through the soleus where the standing version hit gastroc. Stop at the first hint of the left-heel spot. REPLACES the PT 3×15 today. (Deliberately down to 70 from the ~95 that cramped the right leg and broke form — clean reps first, then climb back.)" }
       ]
     },
 

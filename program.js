@@ -138,7 +138,11 @@ const PROGRAM = {
           fields:["duration","rpe"], labels:{duration:"MINUTES", rpe:"PAIN"},
           phs:{duration:"min", rpe:"0-10"},
           target:"Minutes of stiffness on first getting up · pain 0–10",
-          note:"Minutes, not a vibe: time how long from standing up to walking normally. The PAIN number this week is specifically the back of the LEFT heel — the bursitis spot — and note any visible swelling there in the session note. FULL-height heel lifts every day, no wean; once, this week, work out exactly which insert/setting 'full height' is and write it down here, so the sports-med doctor gets an accurate account. Any morning the heel is worse than the day before → skip that day's conditioning entirely." }
+          note:"Minutes, not a vibe: time how long from standing up to walking normally. The PAIN number this week is specifically the back of the LEFT heel — the bursitis spot — and note any visible swelling there in the session note. FULL-height heel lifts every day, no wean; once, this week, work out exactly which insert/setting 'full height' is and write it down here, so the sports-med doctor gets an accurate account. Any morning the heel is worse than the day before → skip that day's conditioning entirely." },
+        { name:"New niggles scan", sets:1,
+          fields:["rpe"], labels:{rpe:"WORST"}, phs:{rpe:"0-10"},
+          target:"Anything new, anywhere? 0 = nothing",
+          note:"Ten seconds, head to toe: is any spot new, or behaving differently than yesterday? Score the worst one 0–10 and NAME it in the session note — even a 1. This row exists because of the bursitis: a flare should reach the Sunday re-program through the export, not through remembering to mention it. 0 most mornings is the expected answer; the whole value is the morning it isn't." }
       ]
     },
 

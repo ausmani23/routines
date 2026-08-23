@@ -2,7 +2,10 @@
 <html lang="en">
 <head>
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<!-- maximum-scale=1 stops iOS auto-zooming focused inputs (his explicit ask);
+     Safari has ignored it for manual pinch-zoom since iOS 10, so accessibility
+     zoom still works. -->
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, viewport-fit=cover">
 <meta name="theme-color" content="#0F1922">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
@@ -110,6 +113,12 @@
       <label for="lDur">How long did it take, roughly?</label>
       <input id="lDur" inputmode="numeric" placeholder="—"><span>min</span>
     </div>
+    <!-- Backdating a forgotten session: leave as today for a normal finish;
+         change it and the session is logged (and counted) on that day. -->
+    <div class="durrow">
+      <label for="lDate">Log it for</label>
+      <input id="lDate" type="date">
+    </div>
   </div>
   <div class="start"><button id="btnLiftDone">Finish &amp; log</button></div>
 </div></section>
@@ -129,6 +138,9 @@
   </div>
   <p class="flash" id="nFlash"></p>
   <button class="resetsched" id="nImport">Import lift history — paste a Hevy CSV export above, then tap</button>
+  <p class="label" style="margin-top:26px">Past sessions <span class="cnt" id="nSessCount"></span></p>
+  <div id="nSessions"></div>
+  <p class="label" style="margin-top:26px">Notes</p>
   <div id="nList"></div>
 </div></section>
 

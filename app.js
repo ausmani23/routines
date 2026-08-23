@@ -668,7 +668,59 @@ function sessionNoteItems(){
   });
   return out;
 }
+/* ---------- past sessions ----------
+   The finished-workout record, in-app at last (his Aug 23 ask — the missing
+   S1s were invisible until the export). Every session on THIS device, newest
+   first, tap a row for the sets. Sessions finished on another device live in
+   that device's localStorage; the weekly export is still the only merge. */
+const sessOpen = {};
+function renderPastSessions(){
+  const host = $("#nSessions"); if(!host) return;
+  const ss = ((db.strength && db.strength.sessions) || []).slice().reverse();
+  const cnt = $("#nSessCount");
+  if(cnt) cnt.textContent = ss.length ? `${ss.length} on this device` : "none yet";
+  if(!ss.length){
+    host.innerHTML = `<p class="hint" style="border:0">Nothing logged on this device yet. Finished
+      workouts land here. (Each device keeps its own log — sessions finished on
+      the other one only meet in the weekly export.)</p>`;
+    return;
+  }
+  host.innerHTML = ss.map((s,i)=>{
+    const d = isoDay(s.end||s.start);
+    const open = !!sessOpen[i];
+    const nSets = (s.sets||[]).length;
+    let body = "";
+    if(open){
+      const byEx = [];
+      (s.sets||[]).forEach(x=>{
+        let g = byEx.find(y=>y.ex===x.ex);
+        if(!g) byEx.push(g = {ex:x.ex, sets:[]});
+        g.sets.push(x);
+      });
+      body = byEx.map(g=>{
+        const line = typeof fmtLoggedSet === "function"
+          ? g.sets.map(fmtLoggedSet).join(", ")
+          : `${g.sets.length} set${g.sets.length===1?"":"s"}`;
+        const xn = s.exNotes && s.exNotes[g.ex];
+        return `<div class="sess-ex"><b>${esc(g.ex)}</b> — ${esc(line)}${
+          xn?`<div class="sess-xn">${esc(xn)}</div>`:""}</div>`;
+      }).join("") || `<div class="sess-ex">No sets — note only.</div>`;
+      if(s.note) body += `<div class="sess-note">“${esc(s.note)}”</div>`;
+    }
+    return `<div class="sess-card">
+      <button class="sess-h" data-sess="${i}" aria-expanded="${open}">
+        <span>${d} · <em>${esc(s.wName||s.w)}</em></span>
+        <s>${s.week?`wk ${s.week} · `:""}${nSets} set${nSets===1?"":"s"}${s.mins?` · ${s.mins} min`:""} ${open?"▾":"▸"}</s>
+      </button>
+      ${body}
+    </div>`;
+  }).join("");
+  host.querySelectorAll("[data-sess]").forEach(el=>{ el.onclick=()=>{
+    const i=+el.dataset.sess; sessOpen[i]=!sessOpen[i]; renderPastSessions(); }; });
+}
+
 function renderNotes(){
+  renderPastSessions();
   const list = $("#nList");
   const items = db.notes.map(x=>({ ts:x.ts, text:x.text, name:x.ctx && x.ctx.name, del:x.ts }))
     .concat(sessionNoteItems())

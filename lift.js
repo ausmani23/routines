@@ -18,7 +18,7 @@
 /* ---------- shape of the stored log ----------
    db.strength.sessions: newest last.
      { w, sid, block, week, start, end, note, mins, exNotes,
-       sets:[{ex, n, weight, height, reps, distance, duration, rpe}] }
+       sets:[{ex, n, weight, height, reps, distance, duration, where, rpe}] }
    `sid` is the schedule slot it was logged against (see schedule.js) and may
    be absent — sessions logged before the calendar existed simply lack it, and
    anything opened from Browse has no slot to record.
@@ -50,6 +50,7 @@ const FIELDS = {
   reps:     { label:"REPS",   ph:"reps", mode:"numeric" },
   distance: { label:"DIST",   ph:"m",    mode:"decimal" },
   duration: { label:"TIME",   ph:"m:ss", mode:"text"    },
+  where:    { label:"WHERE",  ph:"spot", mode:"text"    },   // free text — the check-in's "which body part"
   rpe:      { label:"RPE",    ph:"rpe",  mode:"decimal" }
 };
 const LIFT_FIELDS = ["weight","reps","rpe"];
@@ -98,6 +99,7 @@ function fmtPrev(e, p, kg){
   if(f.includes("height") && p.height) out.push(`${p.height}cm`);
   if(f.includes("distance") && p.distance) out.push(`${p.distance}m`);
   if(f.includes("duration") && p.duration) out.push(p.duration);
+  if(f.includes("where") && p.where) out.push(p.where);
   /* "/" not " · ": this column is ~70px on a phone and a run needs to fit
      distance, time and RPE in it without ellipsing. */
   let s = out.join("/") || "—";
@@ -143,10 +145,10 @@ function suggestFor(e, k, p){
   return "";
 }
 
-function programWeek(){
+function programWeek(ts){
   if(!PROGRAM.start) return PROGRAM.week||1;
   const started = dayOf(new Date(PROGRAM.start+"T00:00:00").getTime());
-  const w = Math.floor((dayOf(Date.now())-started)/(7*DAY)) + 1;
+  const w = Math.floor((dayOf(ts==null?Date.now():ts)-started)/(7*DAY)) + 1;
   return Math.max(1, w);
 }
 function workingSets(w){ return w.exercises.reduce((a,e)=>a+(e.warmup?0:(e.sets||0)),0); }
@@ -201,6 +203,7 @@ function saveLiftDraft(){
     ex: lift.ex, entries: lift.entries, exNotes: lift.exNotes, exUnit: lift.exUnit,
     note: $("#lNote") ? $("#lNote").value : "",
     dur: $("#lDur") ? $("#lDur").value : "",
+    date: $("#lDate") ? $("#lDate").value : "",
     startedAt: lift.startedAt, savedAt: Date.now()
   };
   saveDB();
@@ -244,6 +247,10 @@ function openLift(id, sid){
   $("#lSub").textContent = w.sub || "";
   $("#lNote").value = draft ? (draft.note||"") : "";
   const dur = $("#lDur"); if(dur) dur.value = draft ? (draft.dur||"") : "";
+  /* "Log it for" defaults to today; change it to enter a forgotten session on
+     the day it actually happened (the completion tick follows the date). */
+  const dt = $("#lDate");
+  if(dt) dt.value = (draft && draft.date) || isoDay(Date.now());
   /* Surface last time's session note on the way in — a note you can't ever
      see again is a note that "didn't save". */
   const last = lastSession(w.id), lp = $("#lPrev");
@@ -447,6 +454,7 @@ function renderLift(){
   });
   const ln = $("#lNote"); if(ln) ln.oninput = saveLiftDraft;
   const ld = $("#lDur"); if(ld) ld.oninput = saveLiftDraft;
+  const lda = $("#lDate"); if(lda) lda.oninput = saveLiftDraft;
   $("#exAdd").onclick = addExercise;
   $("#exName").onkeydown = e => { if(e.key==="Enter"){ e.preventDefault(); addExercise(); } };
   const n = loggedSets().length;
@@ -563,9 +571,18 @@ function finishLift(){
   const mins = durEl ? parseInt(durEl.value, 10) : NaN;
   if(sets.length || note || hasExNotes){
     db.strength = db.strength || { sessions:[] };
+    /* Backdating: if "Log it for" was moved off today, the session is stored
+       at noon of that day, so the schedule tick and the export both land on
+       the day the work actually happened. */
+    let start = lift.startedAt, end = Date.now();
+    const dEl = $("#lDate");
+    if(dEl && dEl.value && dEl.value !== isoDay(end)){
+      const t = new Date(dEl.value + "T12:00:00").getTime();
+      if(!isNaN(t)){ start = t; end = t; }
+    }
     const s = {
-      w: lift.w.id, sid: lift.sid, wName: lift.w.name, block: PROGRAM.block, week: programWeek(),
-      start: lift.startedAt, end: Date.now(), note, sets
+      w: lift.w.id, sid: lift.sid, wName: lift.w.name, block: PROGRAM.block, week: programWeek(end),
+      start, end, note, sets
     };
     if(hasExNotes) s.exNotes = exNotes;
     if(mins > 0) s.mins = mins;
@@ -589,6 +606,7 @@ function finishLift(){
 function fmtLoggedSet(x){
   const has = k => x[k] != null && x[k] !== "";
   const out = [];
+  if(has("where")) out.push(x.where);
   if(has("weight") || (has("reps") && !has("height"))) out.push(`${x.weight||"bw"}×${has("reps")?x.reps:"?"}`);
   if(has("height")) out.push(`${x.height} cm${has("reps")?` × ${x.reps}`:""}`);
   if(has("distance")) out.push(`${x.distance} m`);

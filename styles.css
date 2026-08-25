@@ -293,7 +293,8 @@ select.fld{text-align-last:center;appearance:none;-webkit-appearance:none}
 /* per-exercise note */
 .exnote{width:100%;min-width:0;margin-top:8px;background:transparent;
   border:1px dashed var(--line);border-radius:9px;color:var(--bone);font:inherit;
-  font-size:12.5px;padding:8px 10px;-webkit-appearance:none}
+  font-size:12.5px;line-height:1.4;padding:8px 10px;-webkit-appearance:none;
+  display:block;resize:none;overflow:hidden}
 .exnote:focus{outline:none;border-color:var(--signal)}
 .exnote::placeholder{color:var(--dimmer);opacity:.6}
 .exn-prev{font-style:normal}

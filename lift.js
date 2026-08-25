@@ -396,8 +396,8 @@ function renderLift(){
         ${heads.map(h=>`<div>${h}</div>`).join("")}<div></div></div>
       ${rows}
       <button class="addset" data-add="${ei}">+ set</button>
-      <input class="exnote" data-xn="${ei}" placeholder="Note for this exercise — machine, grip, pain…"
-        value="${esc(lift.exNotes[ei]||"")}" aria-label="Note for ${esc(e.name)}">
+      <textarea class="exnote" data-xn="${ei}" rows="1" placeholder="Note for this exercise — machine, grip, pain…"
+        aria-label="Note for ${esc(e.name)}">${esc(lift.exNotes[ei]||"")}</textarea>
     </div>`;
   }).join("") + `
     <div class="addex">
@@ -449,10 +449,15 @@ function renderLift(){
   $("#lBody").querySelectorAll("[data-hist]").forEach(el=>{
     el.onclick = ()=>{ const i=+el.dataset.hist; lift.histOpen[i]=!lift.histOpen[i]; renderLift(); };
   });
+  /* Notes wrap and grow downward instead of scrolling off to the right:
+     height is re-derived from scrollHeight on every input, and once at
+     render so a restored draft opens at the right height. */
+  const growNote = el => { el.style.height = "auto"; el.style.height = el.scrollHeight + "px"; };
   $("#lBody").querySelectorAll(".exnote").forEach(el=>{
-    el.oninput = ()=>{ lift.exNotes[+el.dataset.xn] = el.value; saveLiftDraft(); };
+    growNote(el);
+    el.oninput = ()=>{ lift.exNotes[+el.dataset.xn] = el.value; growNote(el); saveLiftDraft(); };
   });
-  const ln = $("#lNote"); if(ln) ln.oninput = saveLiftDraft;
+  const ln = $("#lNote"); if(ln){ growNote(ln); ln.oninput = ()=>{ growNote(ln); saveLiftDraft(); }; }
   const ld = $("#lDur"); if(ld) ld.oninput = saveLiftDraft;
   const lda = $("#lDate"); if(lda) lda.oninput = saveLiftDraft;
   $("#exAdd").onclick = addExercise;

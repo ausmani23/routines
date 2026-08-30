@@ -100,9 +100,12 @@ display over canonical-lbs storage, per-lift history panel, backdating via the
 - **MAS is still an assumed 3.9 m/s** — the first real interval week (Sri
   Lanka wk 6 on the sheet) measures it via logged distance+duration, never a
   time trial.
-- **Mobility A/B and PT days run over the 10.5-min budget** (pre-existing; a
-  trim conversation is pending). A post-run stretch routine is promised for
-  when running actually returns.
+- **Mobility A/B runs long by design** (Aug 30, 2026): the standalone PT card
+  was being skipped, so its active items folded INTO Mobility A/B (~21 min
+  required on a non-lift day, ~16 on lift days when the gym raise replaces the
+  3×15) and the card retired to on-demand as the reference/travel copy. He
+  accepted the length; the paused items still live on the retired card. The
+  post-run stretch routine now exists (`postrun`, on-demand, 5/10-min).
 - **Locked-screen playback** stays out of scope: wake-lock-plus-screen-on is
   the accepted answer; no native wrapper.
 

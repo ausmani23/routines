@@ -407,10 +407,13 @@ function renderToday(){
 }
 function restTodayHTML(k){
   const nx = nextSlotAfter(k), w = nx && workoutById(nx.w);
+  let next = w ? ` Next up · <b>${w.name}</b>, ${relDay(nx.date)||fmtDay(nx.date)}.` : "";
+  if(!next && typeof nextWeeklyAfter === "function"){
+    const nw = nextWeeklyAfter(k);   // apps whose sessions are weekday routines
+    if(nw) next = ` Next up · <b>${nw.r.name}</b>, ${relDay(nw.date)||fmtDay(nw.date)}.`;
+  }
   return `<div class="area"><p class="col-h">Training <s>rest day</s></p>
-    <p class="restline">Nothing programmed today.${w
-      ? ` Next up · <b>${w.name}</b>, ${relDay(nx.date)||fmtDay(nx.date)}.`
-      : ""}</p></div>`;
+    <p class="restline">Nothing programmed today.${next}</p></div>`;
 }
 function onDemandHTML(){
   const rs = onDemandRoutines(), ws = unscheduledWorkouts();
@@ -471,7 +474,7 @@ function renderBrowse(){
        so it heads this section rather than getting a group of its own. */
     { key:"mobility", cap:"daily unless marked on demand",
       cards: (PROGRAM.workouts||[]).filter(w=>browseArea(areaOf(w))==="mobility").map(w=>({w}))
-               .concat(dailyRoutines().map(r=>({r})), onDemandRoutines().map(r=>({r}))) },
+               .concat(ROUTINES.filter(r=>freqOf(r)!=="onDemand").map(r=>({r})), onDemandRoutines().map(r=>({r}))) },
     { key:"strength", cap: PROGRAM.block || "",
       cards: (PROGRAM.workouts||[]).filter(w=>areaOf(w)==="strength").map(w=>({w})) },
     { key:"cardio", cap:"running, cutting and grids",
@@ -479,7 +482,7 @@ function renderBrowse(){
   ];
   host.innerHTML = secs.filter(s=>s.cards.length).map(s=>
     `<div class="area"><p class="col-h">${AREAS[s.key].label} <s>${esc(s.cap)}</s></p>
-      ${s.cards.map(c=>c.r ? cardHTML(c.r, {when: freqOf(c.r)==="daily" ? "Every day" : "On demand"})
+      ${s.cards.map(c=>c.r ? cardHTML(c.r, {when: routineWhen(c.r)})
                            : browseWorkoutHTML(c.w)).join("")}</div>`).join("");
   wireCards(host);
 }

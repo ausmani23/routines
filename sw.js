@@ -1,10 +1,11 @@
 /* Cache-first service worker with background refresh (stale-while-revalidate).
    Bump CACHE on every deploy that changes app files — it's what triggers
    clients to pick up the new version. */
-const CACHE = "routines-v25";
+const CACHE = "routines-v26";
 const ASSETS = [
   "./",
   "./index.html",
+  "./config.js",
   "./styles.css",
   "./app.js",
   "./lift.js",

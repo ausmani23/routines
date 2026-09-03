@@ -31,8 +31,10 @@ let state = { routine:null, variant:0, moves:0, seq:[], i:0, left:0, up:0, total
           read out through the export on the Notes screen; nothing else touches
           them. `ctx` is {kind,id,name} when the note was written from inside a
           routine or workout — see noteCtx below.
-   strength: {sessions:[…]} — written by lift.js, see the shape documented there. */
-const DB_KEY = "routines.v1";
+   strength: {sessions:[…]} — written by lift.js, see the shape documented there.
+   The key comes from config.js: localStorage is per-ORIGIN, not per-path, and
+   every sibling app lives on the same origin, so each needs its own. */
+const DB_KEY = APP.dbKey;
 function loadDB(){
   const def = { sound:true, levels:{}, exLevels:{}, variantSel:{}, variantDone:{}, log:{},
     notes:[], strength:{sessions:[]}, sched:{} };
@@ -84,7 +86,7 @@ const NOSLEEP_MP4 = "data:video/mp4;base64,AAAAIGZ0eXBpc29tAAACAGlzb21pc28yYXZjM
    still fire if the phone locks or the tab is backgrounded and JS stops ticking. */
 let actx=null, scheduled=[];
 /* iOS 16.4+ exposes navigator.audioSession. Declaring the session "ambient"
-   lets the beeps MIX with whatever else is playing (Spotify kept pausing
+   lets the beeps MIX with whatever else is playing (music kept pausing
    otherwise). The trade: ambient audio obeys the ringer switch, so beeps are
    silent with the ringer off — accepted, since music + cues together is the
    actual use. On browsers without audioSession the old behavior stands. */
@@ -147,7 +149,7 @@ function silentWavURL(){ // 0.5 s of silence, 8 kHz mono 16-bit, built in memory
   return URL.createObjectURL(new Blob([buf],{type:"audio/wav"}));
 }
 function mediaSession(on){
-  if(canAmbient) return;   // ambient session already mixes; the loop would pause Spotify
+  if(canAmbient) return;   // ambient session already mixes; the loop would pause the music
   try{
     if(on){
       if(!silentEl){ silentEl=new Audio(silentWavURL()); silentEl.loop=true; }
@@ -250,7 +252,8 @@ function defaultVariant(r){
 }
 function blockSeconds(b){
   const n=(b.sides||1)*(b.sets||1);
-  return (b.mode==="reps" ? (b.est||60)*n : b.sec*n);
+  const rest=(b.rest||0)*((b.sets||1)-1);   // between-set rest counts toward the honest total
+  return (b.mode==="reps" ? (b.est||60)*n : b.sec*n) + rest;
 }
 /* Optional blocks are reported separately so the headline time reflects the
    work that actually has to happen — the 10-min-per-session budget. */
@@ -478,6 +481,11 @@ function buildSeq(){
           set: sets>1 ? `Set ${st+1} of ${sets}` : ""
         });
       }
+      /* A block may declare `rest` (seconds) — a real countdown between its
+         sets, not after the last one. Multi-set holds (wall sits) need it. */
+      if(b.rest && st < sets-1)
+        seq.push({ type:"rest", mode:"time", sec:b.rest, name:"Rest",
+                   label:`${b.name} — set ${st+2} of ${sets}`, block:bi });
     }
   });
   return seq;
@@ -492,7 +500,7 @@ function startRoutine(){
 }
 function renderBeads(){
   $("#beads").innerHTML = state.seq.map((s,i)=>
-    `<div class="bead" data-b="${i}" ${s.type==="prep"?'style="flex:.3"':""}><i></i></div>`).join("");
+    `<div class="bead" data-b="${i}" ${s.type==="prep"||s.type==="rest"?'style="flex:.3"':""}><i></i></div>`).join("");
 }
 function paintBeads(){
   state.seq.forEach((s,i)=>{
@@ -529,10 +537,11 @@ function loadStep(i, opts){
   $("#tElapsed").textContent = reps ? "tap when done" : (s.set||"");
 
   $("#phase").textContent = s.type==="prep" ? "Starting"
+      : s.type==="rest" ? "Breathe"
       : `Move ${s.block+1} of ${state.moves}${s.set?" · "+s.set:""}${s.tag?" · "+s.tag:""}`;
-  $("#rName").textContent = s.type==="prep" ? "Get set" : s.name;
-  $("#rLvl").textContent  = s.type==="prep" ? `Up next: ${s.label}` : (s.detail||"");
-  $("#rCue").textContent  = s.type==="prep" ? "" : (s.cue||"");
+  $("#rName").textContent = s.type==="prep" ? "Get set" : s.type==="rest" ? "Rest" : s.name;
+  $("#rLvl").textContent  = (s.type==="prep"||s.type==="rest") ? `Up next: ${s.label}` : (s.detail||"");
+  $("#rCue").textContent  = (s.type==="prep"||s.type==="rest") ? "" : (s.cue||"");
 
   const nx=state.seq[i+1];
   $("#rNext").innerHTML = nx ? `Next · <b>${nx.name}${nx.side?" — "+nx.side:""}</b>` : "Last one";
@@ -669,8 +678,7 @@ function sessionNoteItems(){
   return out;
 }
 /* ---------- past sessions ----------
-   The finished-workout record, in-app at last (his Aug 23 ask — the missing
-   S1s were invisible until the export). Every session on THIS device, newest
+   The finished-workout record, in-app. Every session on THIS device, newest
    first, tap a row for the sets. Sessions finished on another device live in
    that device's localStorage; the weekly export is still the only merge. */
 const sessOpen = {};
@@ -682,7 +690,7 @@ function renderPastSessions(){
   if(!ss.length){
     host.innerHTML = `<p class="hint" style="border:0">Nothing logged on this device yet. Finished
       workouts land here. (Each device keeps its own log — sessions finished on
-      the other one only meet in the weekly export.)</p>`;
+      another one only meet in the weekly export.)</p>`;
     return;
   }
   host.innerHTML = ss.map((s,i)=>{
@@ -720,6 +728,11 @@ function renderPastSessions(){
 }
 
 function renderNotes(){
+  /* The copy that differs per person — who the export goes to — comes from
+     config.js, so index.html stays identical across the sibling apps. */
+  const intro = $("#nIntro"); if(intro) intro.innerHTML = APP.notesIntro || "";   // our copy, not user data
+  const lbl = $("#nExpLabel"); if(lbl) lbl.textContent = APP.notesLabel || "Export";
+  const imp = $("#nImport"); if(imp) imp.hidden = !APP.history;
   renderPastSessions();
   const list = $("#nList");
   const items = db.notes.map(x=>({ ts:x.ts, text:x.text, name:x.ctx && x.ctx.name, del:x.ts }))
@@ -767,7 +780,7 @@ function exportMD(){
       (st.streak>1?` · ${st.streak}-day streak`:"");
   }).filter(Boolean);
   return [
-    `# Routines export — ${isoDay(Date.now())}`,
+    `# ${APP.exportTitle} — ${isoDay(Date.now())}`,
     `Current block: **${PROGRAM.block}**, week ${typeof programWeek==="function"?programWeek():PROGRAM.week}.`,
     ``,
     /* The calendar as it actually stands. Days he dragged only exist on the
@@ -807,10 +820,10 @@ function downloadExport(){
   try{
     const url = URL.createObjectURL(new Blob([exportMD()],{type:"text/markdown"}));
     const a = document.createElement("a");
-    a.href = url; a.download = `routines-export-${isoDay(Date.now())}.md`;
+    a.href = url; a.download = `${APP.exportFile}-${isoDay(Date.now())}.md`;
     document.body.appendChild(a); a.click(); a.remove();
     setTimeout(()=>URL.revokeObjectURL(url), 4000);
-    flash("Downloaded — drop it in the repo's feedback/ folder.");
+    flash(`Downloaded — ${APP.exportHint}.`);
   }catch(e){ flash("Download failed — use Copy instead."); }
 }
 /* ---------- lift-history import ----------
@@ -886,4 +899,6 @@ if("serviceWorker" in navigator && window.isSecureContext){
   window.addEventListener("load", ()=>{ navigator.serviceWorker.register("sw.js").catch(()=>{}); });
 }
 
+/* Larger type for the apps that want it: one zoom on the body (config.js). */
+if(APP.textScale && APP.textScale !== 1) document.body.style.zoom = APP.textScale;
 renderHome(); nowStr(); setInterval(nowStr,20000); paintAwakeStatus(); paintToggles();

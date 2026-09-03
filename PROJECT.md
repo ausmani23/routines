@@ -11,7 +11,10 @@ This doc is the orientation layer. `CLAUDE.md` carries the working rules and
 load-bearing invariants; `feedback/README.md` documents the weekly loop;
 `claude_workspace/INJURY_CONTEXT.md` holds the standing clinical constraints;
 the dated `claude_workspace/session_*.md` files are the change history.
-A sibling app for his wife lives at ausmani23.github.io/tara (separate repo).
+Three sibling apps share the shell: his wife's (ausmani23.github.io/tara) and
+his parents' (…/abba, …/amma), each its own public repo. The shell is canonical
+here and synced out with `claude_workspace/sync-shell.sh`; only `config.js`,
+`routines.js`, `program.js`, `history.js` and the icons differ per app.
 
 ---
 
@@ -77,7 +80,7 @@ deadlift/squat → bench → pull-ups (currently a 3×/week frequency experiment
 
 ## Architecture in one breath
 
-`index.html` (eight `.screen` sections, no router) + `styles.css` + `sw.js`
+`config.js` (this copy's identity) + `index.html` (nine `.screen` sections, no router) + `styles.css` + `sw.js`
 (cache-first, background refresh) + `routines.js` (stable PT data) +
 `program.js` (churning block) + `history.js` (generated bare numbers) +
 `schedule.js` (pure date/agenda functions, loads before app.js) + `app.js`
@@ -103,9 +106,14 @@ display over canonical-lbs storage, per-lift history panel, backdating via the
 - **Mobility A/B runs long by design** (Aug 30, 2026): the standalone PT card
   was being skipped, so its active items folded INTO Mobility A/B (~21 min
   required on a non-lift day, ~16 on lift days when the gym raise replaces the
-  3×15) and the card retired to on-demand as the reference/travel copy. He
-  accepted the length; the paused items still live on the retired card. The
-  post-run stretch routine now exists (`postrun`, on-demand, 5/10-min).
+  3×15) and the card retired to on-demand as the reference/travel copy. The
+  post-run stretch routine now exists (`postrun`, on-demand, 5/10-min). His
+  Sep 1 read: the problem was concentration, not length — so since Sep 3 a
+  routine can be done in **batches** ("give me 10 minutes" chips on the detail
+  screen; see CLAUDE.md). The calf-raise volume question from the same note is
+  still open for a Sunday.
+- **Past lifts** (Sep 3, 2026): the inline history panel taps through to a full
+  screen with a dated 1RM chart. Ships in all four apps.
 - **Locked-screen playback** stays out of scope: wake-lock-plus-screen-on is
   the accepted answer; no native wrapper.
 

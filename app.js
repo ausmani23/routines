@@ -443,13 +443,16 @@ function renderUpcoming(){
   host.innerHTML = upcomingDays(10).map(d=>{
     const s = dailySummary(d.key);
     const names = s.items.map(i=>i.short).join(" · ");
+    /* "Daily" when everything on the line is a daily; an app whose sessions
+       are weekday routines reads "Scheduled · Session 19 min" instead. */
+    const word = s.items.every(i=>i.kind!=="routine" || freqOf(i.r)==="daily") ? "Daily" : "Scheduled";
     return `<div class="day" data-day="${d.key}">
       <p class="day-h"><b>${d.rel || d.label}</b>
         <s>${d.rel ? d.label : ""}${d.day?`${d.rel?" · ":""}day ${d.day}`:""}</s></p>
-      <p class="dailyline">${s.left ? "Daily" : "Daily ✓"} · ${names}${s.secs?` <b>${fmtMin(s.secs)}</b>`:""}</p>
+      ${s.items.length ? `<p class="dailyline">${s.left ? word : word+" ✓"} · ${names}${s.secs?` <b>${fmtMin(s.secs)}</b>`:""}</p>` : ""}
       ${d.items.length
         ? d.items.map(it=>slotHTML(it)).join("")
-        : `<p class="restline">Rest · dailies only</p>`}
+        : `<p class="restline">${s.items.length ? "Rest · dailies only" : "Rest day"}</p>`}
     </div>`;
   }).join("");
   wireCards(host);

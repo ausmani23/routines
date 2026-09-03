@@ -15,6 +15,16 @@ There is no build, lint, or test step. Development is: edit files, open
 `index.html` (or push and check the live URL).
 
 - **Deploy**: `git push` — GitHub Pages serves the repo root from `main`.
+- **This repo is the canonical shell for four apps** (routines, tara, abba,
+  amma — all on ausmani23.github.io). `app.js lift.js schedule.js drag.js
+  styles.css index.html sw.js manifest.json` are byte-identical across them
+  apart from the title/manifest/CACHE lines; everything per-person lives in
+  each app's `config.js` (name, `dbKey`, export copy, area labels, `history`,
+  `textScale`). **Make shell changes here, then run
+  `claude_workspace/sync-shell.sh`** (copies the shell out, restores each
+  sibling's identity, bumps its CACHE; `--dry-run` to preview). Never edit a
+  shell file in a sibling. Then run each sibling's harnesses:
+  `claude_workspace/run-tests.sh ../tara` (also `../abba`, `../amma`).
 - **When any app file changes, bump `CACHE` in `sw.js`** (`routines-v1` →
   `routines-v2`, …). Installed clients only pick up new versions when the cache
   name changes. The app then reloads itself once the new worker takes control
@@ -26,8 +36,9 @@ There is no build, lint, or test step. Development is: edit files, open
   correct deploy.
 - Test harnesses live in `claude_workspace/tests/` (engine assertions, schedule +
   navigation, routine durations + data integrity, responsive layout) — see the
-  README there. `schedule.html` asserts the real `PROGRAM.schedule` is
-  well-formed, so **run it after every re-program**.
+  README there; `claude_workspace/run-tests.sh` runs them all. `schedule.html`
+  asserts the real `PROGRAM.schedule` is well-formed, so **run it after every
+  re-program**.
 - **Never use `--screenshot` at a narrow `--window-size` to check mobile
   layout.** Headless Chrome lays out at a fixed ~500px regardless, so the image
   is a crop of a wider render and looks exactly like a clipping bug. Render
@@ -35,6 +46,9 @@ There is no build, lint, or test step. Development is: edit files, open
 
 ## Architecture
 
+- `config.js` — the `APP` object: this copy's identity (see Commands). Loaded
+  first; `app.js` reads `APP.dbKey`, the export strings and `textScale`,
+  `schedule.js` merges `APP.areas` into `AREAS`.
 - `routines.js` — the `ROUTINES` data array; the only file that changes for
   rehab-content edits. Schema documented in its header comment. New routines are
   appended objects; the engine needs no changes.
@@ -55,7 +69,10 @@ There is no build, lint, or test step. Development is: edit files, open
 and is the **only** statement of what happens when — `PROGRAM.note` must not
 re-enumerate the days, or the two will drift on the first re-program. Recurring
 work instead carries `sched:{freq:"daily"|"onDemand"}`: that is every routine in
-`routines.js` plus the morning check-in.
+`routines.js` plus the morning check-in. A routine may also carry
+`sched:{freq:"weekly", days:[1,3,5]}` (0 = Sunday) and be due on those weekdays
+only — `routinesOn(k)` in schedule.js; the parents' apps use it, this one
+doesn't.
 
 `sid` is stable within a block and is what a drag override and a logged session
 are keyed to, so the same workout on two different days ticks off independently.
@@ -80,7 +97,12 @@ so **a move is an override, not an edit**, and "Reset to programmed" clears them
   ad-hoc exercise adding, the lb ⇄ kg display toggle, and the markdown export.
   There is deliberately **no rest/session timer** — he times on his Garmin;
   session length is self-reported in the field next to Finish and stored as
-  `mins`. Loads **after** `app.js` and depends on `db`, `saveDB`, `go`,
+  `mins`. The inline history panel is a preview; **Past lifts** (`#lifts`,
+  `renderLifts`/`openLifts`) is the full screen — lift picker, a hand-drawn SVG
+  chart of est. 1RM or heaviest set with dated axes, every rep record, every
+  session. It keeps its own Back target (`lifts.back`) because it opens from
+  the mid-session lift screen as well as from Notes; `[data-back]` only knows
+  the list screens. Loads **after** `app.js` and depends on `db`, `saveDB`, `go`,
   `ping`, `mmss`, `$`, `esc`, `onClick` from it.
 
 ### Weights are stored in lbs, always
@@ -149,7 +171,25 @@ completed last (`db.variantDone`), so A/B rotates on its own.
 Sessions target ≤10 min. `routineSeconds()` counts only required blocks;
 `optionalSeconds()` counts `badge:"opt"` ones, shown separately as "+N min opt".
 When adding content, check the totals — `claude_workspace/` has the
-duration-check harness.
+duration-check harness. A block may declare `rest` (seconds between its sets,
+a real "Breathe" countdown, counted in the total).
+
+### Batches — "give me 10 minutes"
+
+A routine can be done in pieces across the day. The detail screen offers
+5/10/15/All chips; `pickBatch()` takes the remaining blocks in order while the
+running total is under budget (so a batch is never empty and ends just past
+the mark — the Start button shows the real length). A finished batch records
+its blocks in `db.part[routineId][YYYY-MM-DD] = {v, done:[…]}` — **indices into
+`r.blocks`**, because names repeat within a routine. A record is *open* only
+while a required block is still undone; once every required block is done the
+day is logged in `db.log` as a single run would be, and the record reads as
+absent (`partRecord` returns null) — so "Run again" is the whole routine,
+optional tails never re-log a day, and Upcoming's totals for a finished routine
+don't change. While a record is open: the card shows "N min left", the variant
+is locked (`defaultVariant`), and **End routine** (`quitRoutine`, no `data-go`)
+keeps the blocks already passed. Records older than a week are dropped on load.
+
 ### Notes and the weekly export
 
 There is no backend, so the app cannot write into this repo. Notes and strength
@@ -159,7 +199,7 @@ strength sessions, routine completions — last 28 days). That export is the inp
 to the Sunday re-program. Don't add a "sync" feature to close this gap without
 asking; the manual hand-off is the design, not an omission.
 
-- `index.html` — eight `<section class="screen">` blocks toggled by an `.on`
+- `index.html` — nine `<section class="screen">` blocks toggled by an `.on`
   class; no router.
 - `sw.js` — cache-first service worker with background refresh.
 - Screen state lives in one mutable `state` object; persistent state in one

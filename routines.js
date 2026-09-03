@@ -48,6 +48,8 @@
               runs in that variant. Omit to run in every variant (that is how
               daily non-negotiables carry across A/B days).
      tag      optional small qualifier next to the name
+     link        optional {label, url} — pictures or a video for the move; a link on
+                 the detail screen only (the run screen is plain text)
    ============================================================ */
 const ROUTINES = [
 {

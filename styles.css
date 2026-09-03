@@ -77,6 +77,14 @@ button{font:inherit;color:inherit;background:none;border:none;cursor:pointer}
 .lvl[aria-pressed="true"]{background:var(--signal);color:#08131A;border-color:var(--signal)}
 .lvl[aria-pressed="true"] s{color:#0F3B39}
 .label{font-size:10.5px;letter-spacing:.16em;text-transform:uppercase;color:var(--dimmer);margin:0 0 9px}
+/* batches: the budget chips, the locked variant, and the step states */
+.levels.budgets{margin-top:-10px}
+.lvl:disabled{opacity:.4}
+.partnote{margin:-12px 0 16px;color:var(--signal)}
+.step.is-done{opacity:.45}
+.step.is-done .n{color:var(--signal)}
+.step.is-later{opacity:.55}
+.tickmark.part{color:var(--dim)}
 .group{font-size:10.5px;letter-spacing:.16em;text-transform:uppercase;color:var(--signal);
   margin:20px 0 2px;padding-top:14px;border-top:1px solid var(--line)}
 .group:first-of-type{margin-top:0}

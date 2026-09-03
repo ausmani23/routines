@@ -93,7 +93,8 @@
     <button class="ctl main" id="btnPause">Pause</button>
     <button class="ctl" id="btnNext">Skip</button>
   </div>
-  <div class="quit"><button data-go="home" id="btnQuit">End routine</button></div>
+  <!-- No data-go: quitting saves the finished blocks first (quitRoutine). -->
+  <div class="quit"><button id="btnQuit">End routine</button></div>
   <video id="nosleep" muted playsinline loop preload="auto"
     style="position:fixed;width:2px;height:2px;opacity:.01;pointer-events:none;bottom:0;left:0"></video>
 </div></section>

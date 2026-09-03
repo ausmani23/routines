@@ -234,7 +234,9 @@ function scheduleExportMD(){
    place of repeating four cards on every single day. */
 function dailySummary(k){
   const items = agendaFor(k).filter(i=>i.area === "check" || i.area === "mobility");
-  const secs = items.reduce((a,i)=>a + (i.kind === "routine" && typeof routineSeconds === "function"
-    ? routineSeconds(i.r) : 0), 0);
+  /* What is LEFT, when a routine is part-way through its batches today. */
+  const secs = items.reduce((a,i)=>a + (i.kind !== "routine" ? 0
+    : typeof remainingSeconds === "function" ? remainingSeconds(i.r, null, k)
+    : typeof routineSeconds === "function" ? routineSeconds(i.r) : 0), 0);
   return { items, left: items.filter(i=>!i.done).length, secs };
 }

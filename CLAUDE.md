@@ -232,7 +232,9 @@ keeps its text. Delete the flag to resume.
 There is no backend, so the app cannot write into this repo. Notes and strength
 logs live in `localStorage` and leave the device only through **Notes & export →
 Copy everything / Download .md**, which emits one markdown document (notes,
-strength sessions, routine completions — last 28 days). That export is the input
+strength sessions, routine completions — last 28 days; since Sep 2026 every
+completion is listed as `date HH:MM` under its routine's summary line, so a
+log can be rebuilt from exports exactly). That export is the input
 to the Sunday re-program. Don't add a "sync" feature to close this gap without
 asking; the manual hand-off is the design, not an omission. The Notes screen
 also has **Copy backup / Restore a backup**: the whole `db` as one JSON blob,

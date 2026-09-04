@@ -1,6 +1,9 @@
 # Routines — project handoff
 
-A personal rehab + training PWA, live at **https://ausmani23.github.io/routines/**
+A personal rehab + training PWA, live at **https://adanerusmani.com/routines/** (was
+ausmani23.github.io/routines until 2 Sep 2026 — the custom domain on the user
+site redirects every project page there; installs from the old address are
+frozen and must be re-installed, see CLAUDE.md)
 (GitHub Pages, repo root, `main`). Plain HTML/CSS/JS — no framework, no build
 step, no dependencies. It began as a hands-free timer for PT routine cards; it
 is now also the owner's complete training system: Claude programs his strength
@@ -11,7 +14,7 @@ This doc is the orientation layer. `CLAUDE.md` carries the working rules and
 load-bearing invariants; `feedback/README.md` documents the weekly loop;
 `claude_workspace/INJURY_CONTEXT.md` holds the standing clinical constraints;
 the dated `claude_workspace/session_*.md` files are the change history.
-Three sibling apps share the shell: his wife's (ausmani23.github.io/tara) and
+Three sibling apps share the shell: his wife's (adanerusmani.com/tara) and
 his parents' (…/abba, …/amma), each its own public repo. The shell is canonical
 here and synced out with `claude_workspace/sync-shell.sh`; only `config.js`,
 `routines.js`, `program.js`, `history.js` and the icons differ per app.

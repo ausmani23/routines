@@ -23,6 +23,12 @@
                  every day and in the one-line daily summary on Upcoming.
                  {freq:"onDemand"} → it never appears on a schedule; you reach
                  it from Browse or the "On demand" row at the foot of Today.
+                 {freq:"gym"} → due on the days program.js schedules a strength
+                 session (the pre-lift prep); {freq:"weekly", days:[1,3,5]} →
+                 fixed weekdays (0 = Sunday).
+                 Every routine is its own card on Today — a BUCKET. Drag one
+                 onto another there and they run as one (a stack), logged
+                 separately; the buckets stay small so that is the norm.
                  Every routine is area "mobility & pt"; the dated strength and
                  cardio work is scheduled from program.js instead.
      blocks      the exercises, in order
@@ -48,6 +54,8 @@
               runs in that variant. Omit to run in every variant (that is how
               daily non-negotiables carry across A/B days).
      tag      optional small qualifier next to the name
+     paused   true → listed dimmed on the detail screen, never run, never
+              counted (an item Carolyn has parked); flip it off to resume
      link        optional {label, url} — pictures or a video for the move; a link on
                  the detail screen only (the run screen is plain text)
    ============================================================ */
@@ -141,7 +149,7 @@ const ROUTINES = [
 },
 {
   id:"mobility", name:"Mobility — A / B", short:"Mobility", accent:"#B48EAD", sched:{freq:"daily"},
-  sub:"Once a day, alternating. A is the QL and low back; B is hips, groin and the posterior chain. As of Sep 2026 the tendon PT lives HERE (your ask — the separate card wasn't getting done): the every-day tendon group runs on both days, the foot work rides Day A, the knee work rides Day B. Everything moves: ease in and out of each stretch rather than hanging at end range. On a day this runs straight into the gym, finish with the lift-prep group at the end.",
+  sub:"Once a day, alternating. A is the QL and low back; B is hips, groin and the posterior chain. Everything moves: ease in and out of each stretch rather than hanging at end range. (Sep 2026: the tendon PT that rode here for a week is back on its own card, and the lift prep is its own card on gym days — drag them onto this one on Today for a single long run.)",
   variants:["Day A — QL & back","Day B — hips & chain"],
   variantTags:["side bends & twists","strength that travels"],
   variantMode:"alternate", defaultLevel:0,
@@ -231,77 +239,13 @@ const ROUTINES = [
      levels:["From a glute bridge, walk the heels out a step at a time and back in, hips held high.",
              "Walk out to near-straight legs, then lower the hips over 5 sec.",
              "Heels on a towel or socks on a smooth floor — slide out slowly, 5 sec, and drag back."]},
-
-    {group:"The tendon — every day (PT)", name:"Isometric calf holds", badge:"req", mode:"time", sec:35, sides:2,
-     dose:"1 hold per side, 30–45 sec, bent knee",
-     detail:"Standing, single leg, knee slightly bent. Rise onto the ball of the foot and hold at ~60–70% effort.",
-     cue:"Moved here from the PT card (Sep 2026) — the tendon work now rides the routine you actually do. Use proactively, not just after flares. Treat it as tendon-stiffness work and a primer — the evidence for it as a painkiller in the Achilles specifically has not held up."},
-
-    {name:"Calf raises", badge:"req", mode:"reps", target:"15 reps", sets:3, est:100, defaultLevel:2,
-     dose:"3 × 15, 90° gate with the wedge · SKIP on lift days — the gym raise replaces it · day after lifting, set 3 @ RPE 7",
-     cue:"Bursitis (Aug 2026, eased Aug 23): on the LEFT, cap every set at RPE 8 — raised from 7 after a pain-free week, since these cause you no trouble and Carolyn wants them kept — and still stop at the first hint of the back-of-heel spot; the right keeps the normal prescription. 90° at the ankle only — no dorsiflexion past neutral, wedge in. Alternate straight-knee and bent-knee sets. 3 × 15 is the dose; the levels change how HARD 15 reps are, never how many. If you can grind out 25, you are training calf endurance, not the tendon — add load, don't add reps. First week on a new level, watch the next-morning stiffness rather than chasing RPE 9. Rolling volume: on a gym day the program's loaded raise REPLACES this outright; the day AFTER loaded gym raises, do this but land set 3 at RPE 7, not 9 — same rule as the day after a match.",
-     levels:["Both legs, bodyweight. 3 sec up, 3 sec down, full contraction at the top. The floor — drop here on a bad morning.",
-             "Single leg, bodyweight, 15 per side. The fallback for a trip where the load didn't come with you: one leg roughly doubles what two legs carry.",
-             "Single leg with the ~40 lb load, 15 per side, 3 sec up / 3 sec down, set 3 landing at RPE 9. The RPE is the target; the weight is whatever reaches it.",
-             "Single leg, ~40 lb, slower: 4 sec up, 2 sec hold at the top, 4 sec down. Same 15 reps, much more time at high strain. This is the rung to use when 40 lb stops being enough — time under load is the lever you still control.",
-             "Single leg, loaded past 40 lb if you can improvise it — books in a pack, water. 8–10 per side. Tell Carolyn before this one: it is the first rung that leaves her rep prescription."]},
-
-    {name:"Banded inversion (tib posterior)", badge:"req", mode:"reps", target:"15 reps", sides:2, sets:2, est:50,
-     dose:"2×15 per foot (3×15 gym days)",
-     detail:"Band around inside of forefoot (big-toe side), anchored to your outside. Pull foot INWARD — sole turns toward midline. 2 sec in, hold, 2 sec back.",
-     cue:"Primary treatment for the medial point, not a supplement. Historically your most under-delivered item — that is why it runs on both days. Bursitis (Aug 2026): these have been causing a little pain — Carolyn's rule (Aug 21): first shrink the range or band tension until they're pain-free; if they can't be made pain-free, they may continue only under 3/10 AND with nothing lingering afterwards — over either line, cut them until the next check-in."},
-
-    {group:"Day A — foot & ankle (PT)", variant:0, name:"Banded eversion (peroneals)",
-     mode:"reps", target:"15 reps", sides:2, sets:1, est:50,
-     dose:"1×15 per foot",
-     detail:"Band around outside of forefoot (little-toe side), anchored to your inside. Push foot OUTWARD — sole turns away from midline. Slow and controlled.",
-     cue:"Lateral ankle stability for soccer and uneven ground. Folded in at the 1×15 floor its own old rule allowed — this routine is carrying the tendon work now; do 2×15 any day you have the time. Bursitis (Aug 2026): same rule as the inversion work — pain-free range first; under 3/10 and nothing lingering, or cut it."},
-
-    {variant:0, name:"Short foot (arch)", badge:"opt", mode:"reps", target:"10 holds × 5 sec", sides:2, est:50,
-     dose:"1 × 10 holds, 5 sec each, per foot",
-     detail:"Barefoot. Without curling toes (toes stay flat), draw the ball of the foot toward the heel. Arch lifts ~0.5 cm.",
-     cue:"Also covered by the inversion band work + Kayanos. Don't let this one balloon the routine."},
-
-    {group:"Day B — knee (PT)", variant:1, name:"Quad tendon loading", badge:"req", mode:"time", sec:45,
-     dose:"45 sec, ~70% effort · set 1 of 2",
-     cue:"For the right knee. Fingertip tenderness at the top-outer corner of the kneecap is the vastus lateralis part of the quad tendon insertion — so load the quad, don't chase the IT band. Rule: pain ≤3–4/10 while loading and back to normal next morning means keep going. Over that twice in a week, drop a level for a week. The second set comes after the balance work — the gap between them is deliberate. (Note: your rung didn't carry over in the move from the PT card — re-pick your level here.)",
-     levels:["Wall sit, back flat on the wall, thighs around 60° — shallower if the knee grumbles. Both feet.",
-             "Band looped behind the knees, Spanish-squat style, torso upright.",
-             "Single-leg wall sit, or a split-squat hold with the back foot on a chair.",
-             "Move off the isometric: slow split squats or step-downs, 3 sec down / 3 sec up, 3 × 8. Isometrics settle a tendon; heavy slow reps are what rebuild it."]},
-
-    {variant:1, name:"Single-leg balance", badge:"opt", mode:"time", sec:30, sides:2,
-     dose:"30 sec per side",
-     detail:"Stand on one foot, slight knee bend, tripod foot, quiet the wobble.",
-     cue:"Progress: stable floor → towel/pillow → eyes closed. Cheapest ankle-sprain insurance there is. Here it earns a second job: the recovery gap between the two wall-sit sets."},
-
-    {variant:1, name:"Quad tendon loading", tag:"2nd round", badge:"req", mode:"time", sec:45,
-     dose:"45 sec, ~70% effort · set 2 of 2",
-     cue:"Set two, recovered rather than straight off the back of set one. Same level, same 70% effort, same pain rule.",
-     levels:["Wall sit, back flat on the wall, thighs around 60° — shallower if the knee grumbles. Both feet.",
-             "Band looped behind the knees, Spanish-squat style, torso upright.",
-             "Single-leg wall sit, or a split-squat hold with the back foot on a chair.",
-             "Move off the isometric: slow split squats or step-downs, 3 sec down / 3 sec up, 3 × 8. Isometrics settle a tendon; heavy slow reps are what rebuild it."]},
-
-    {group:"Before the gym — lift prep", name:"Squat-to-stand", badge:"opt", mode:"reps", target:"6 reps", est:45,
-     dose:"6 slow reps · gym days only",
-     detail:"Feet shoulder-width. Hinge down and take hold of your toes with the legs near-straight, then pull the hips down into a deep squat — chest up, knees pushed out by the elbows. Pause a breath, lift the hips back up to the hamstring stretch, and stand tall.",
-     cue:"This whole group runs on days the routine leads straight into lifting — general prep, injury prevention, nothing more. Skip all three on a no-gym day. Ankles, hips and T-spine in one move. Bursitis (Aug 2026): the bottom of the squat is deep dorsiflexion, the bursa's compression zone — do these in shoes with the heel lifts in, and stop the descent where the back of the left heel stays quiet."},
-    {name:"World's greatest stretch", badge:"opt", mode:"time", sec:80,
-     dose:"80 sec · alternating sides · gym days only",
-     detail:"Step into a long lunge, both hands to the floor inside the front foot. Sink the hips for a breath, then rotate the inside arm up toward the ceiling, eyes following the hand. Step back, swap legs, keep alternating.",
-     cue:"Hips, groin and upper-back rotation in one package — the closest thing to a general warm-up for everything the bar will ask."},
-    {name:"Scapular wall slides", badge:"opt", mode:"reps", target:"8 reps", est:40,
-     dose:"8 slow reps · gym days only",
-     detail:"Back against a wall, arms in a goalpost, forearms and backs of the wrists as close to the wall as they'll go. Slide the arms up overhead and back down without the low back arching away from the wall.",
-     cue:"Primes the shoulders and upper back for pressing, rowing and pull-ups without loading anything. If the wrists can't reach the wall, work where you are — that range is part of what this trains."}
   ]
 },
 {
-  id:"tendon", name:"PT — tendon, foot & knee", short:"PT", accent:"#E5A33C", sched:{freq:"onDemand"},
-  sub:"RETIRED from the daily schedule (Sep 2026): everything active here now lives inside Mobility A / B, riding the routine that actually gets done. This card stays as the reference copy — the full doses, Carolyn's rules, and the PAUSED items (mini-pogos, knee-to-wall) that return around her week 5 (~mid-Sep). Use it on demand as the travel version, or any day you want the PT on its own.",
-  variants:["Day A — foot","Day B — spring"],
-  variantTags:["ankle & arch","knee, groin, pogo"],
+  id:"tendon", name:"PT — tendon, foot & knee", short:"PT", accent:"#E5A33C", sched:{freq:"daily"},
+  sub:"Carolyn's tendon, foot and knee work, alternating A/B; the every-day tendon group runs on both days. Its own card again (Sep 2026) — on Today, drag it onto Mobility or Core for one long run. The PAUSED items (mini-pogos, knee-to-wall) are listed at the foot but never run; they return around her week 5 (~mid-Sep).",
+  variants:["Day A — foot & ankle","Day B — knee"],
+  variantTags:["ankle & arch","wall sits & balance"],
   variantMode:"alternate", defaultLevel:0,
   blocks:[
     {group:"The tendon — every day", name:"Isometric calf holds", badge:"req", mode:"time", sec:35, sides:2,
@@ -310,7 +254,7 @@ const ROUTINES = [
      cue:"Use proactively, not just after flares. Treat it as tendon-stiffness work and a primer — the evidence for it as a painkiller in the Achilles specifically has not held up."},
 
     {name:"Calf raises", badge:"req", mode:"reps", target:"15 reps", sets:3, est:100, defaultLevel:2,
-     dose:"3 × 15, 90° gate with the wedge, set 3 at RPE 9",
+     dose:"3 × 15, 90° gate with the wedge · SKIP on lift days — the gym raise replaces it · day after lifting, set 3 @ RPE 7",
      cue:"Bursitis (Aug 2026, eased Aug 23): on the LEFT, cap every set at RPE 8 — raised from 7 after a pain-free week, since these cause you no trouble and Carolyn wants them kept — and still stop at the first hint of the back-of-heel spot; the right keeps the normal prescription. 90° at the ankle only — no dorsiflexion past neutral, wedge in. Alternate straight-knee and bent-knee sets. 3 × 15 is the dose; the levels change how HARD 15 reps are, never how many. If you can grind out 25, you are training calf endurance, not the tendon — add load, don't add reps. First week on a new level, watch the next-morning stiffness rather than chasing RPE 9. Rolling volume: on a gym day the program's loaded raise REPLACES this outright; the day AFTER loaded gym raises, do this but land set 3 at RPE 7, not 9 — same rule as the day after a match.",
      levels:["Both legs, bodyweight. 3 sec up, 3 sec down, full contraction at the top. The floor — drop here on a bad morning.",
              "Single leg, bodyweight, 15 per side. The fallback for a trip where the load didn't come with you: one leg roughly doubles what two legs carry.",
@@ -334,20 +278,7 @@ const ROUTINES = [
      detail:"Barefoot. Without curling toes (toes stay flat), draw the ball of the foot toward the heel. Arch lifts ~0.5 cm.",
      cue:"Also covered by the inversion band work + Kayanos. Don't let this one balloon the routine."},
 
-    {variant:0, name:"Knee-to-wall test", badge:"opt", mode:"reps", target:"measure LEFT", est:40,
-     dose:"PAUSED — bursitis (Aug 2026). Skip.",
-     detail:"Toe near wall, drive knee forward to touch, heel flat. Brief contact — measure, don't stretch. Note whether the stop is a painless BONY block or a painful/stiff tendon limit.",
-     cue:"PAUSED for the bursitis: this test drives the left ankle to end-range loaded dorsiflexion — exactly the position that compresses the bursa — so the measurement itself is a provocation right now. It returns, same baseline and traffic lights, when the sports-med visit clears it. (Old rule for reference: track LEFT vs your quiet-day ~5.5\", not the R–L gap. Green: ≥5.0\" + painless bony end-feel · Yellow: 3.5–5.0\" or pain at end range · Red: <3.5\" or sharp pain.)"},
-
-    {group:"Day B — knee, groin & spring", variant:1, name:"Mini-pogos", badge:"new",
-     mode:"time", sec:20, sets:2,
-     dose:"PAUSED — bursitis (Aug 2026). Skip.",
-     cue:"PAUSED until the sports-med visit — no plyometrics of any kind while the bursa is angry; the strength program's jumps are pulled for the same reason. Delete this line and resume at your old level when running is cleared. Old rule: SKIP THIS THE DAY YOU PLAY AND THE DAY AFTER — the match already was your spring session, and these want 48 hours between. The block exists to fill the four or five days you don't play, so a match is never the only spring loading you get. Heel loud on landing → stay at this level. Heel lifts in.",
-     levels:["Both feet, small and low. Short ground contact, action at the ankle, knees nearly straight.",
-             "Both feet, then add 10 sec per side single-leg after each set.",
-             "Both feet, 15 sec per side single-leg, then a few low forward bounds."]},
-
-    {variant:1, name:"Quad tendon loading", badge:"new", mode:"time", sec:45,
+    {group:"Day B — knee", variant:1, name:"Quad tendon loading", badge:"req", mode:"time", sec:45,
      dose:"45 sec, ~70% effort · set 1 of 2",
      cue:"For the right knee. Fingertip tenderness at the top-outer corner of the kneecap is the vastus lateralis part of the quad tendon insertion — so load the quad, don't chase the IT band. Rule: pain ≤3–4/10 while loading and back to normal next morning means keep going. Over that twice in a week, drop a level for a week. The second set comes after the balance work — the gap between them is deliberate.",
      levels:["Wall sit, back flat on the wall, thighs around 60° — shallower if the knee grumbles. Both feet.",
@@ -358,15 +289,48 @@ const ROUTINES = [
     {variant:1, name:"Single-leg balance", badge:"opt", mode:"time", sec:30, sides:2,
      dose:"30 sec per side",
      detail:"Stand on one foot, slight knee bend, tripod foot, quiet the wobble.",
-     cue:"Progress: stable floor → towel/pillow → eyes closed. Cheapest ankle-sprain insurance there is, but it also runs in your warm-up — skip it here on a tight day. Here it earns a second job: the recovery gap between the two wall-sit sets."},
+     cue:"Progress: stable floor → towel/pillow → eyes closed. Cheapest ankle-sprain insurance there is. Here it earns a second job: the recovery gap between the two wall-sit sets."},
 
-    {variant:1, name:"Quad tendon loading", tag:"2nd round", badge:"new", mode:"time", sec:45,
+    {variant:1, name:"Quad tendon loading", tag:"2nd round", badge:"req", mode:"time", sec:45,
      dose:"45 sec, ~70% effort · set 2 of 2",
      cue:"Set two, recovered rather than straight off the back of set one. Same level, same 70% effort, same pain rule.",
      levels:["Wall sit, back flat on the wall, thighs around 60° — shallower if the knee grumbles. Both feet.",
              "Band looped behind the knees, Spanish-squat style, torso upright.",
              "Single-leg wall sit, or a split-squat hold with the back foot on a chair.",
-             "Move off the isometric: slow split squats or step-downs, 3 sec down / 3 sec up, 3 × 8. Isometrics settle a tendon; heavy slow reps are what rebuild it."]}
+             "Move off the isometric: slow split squats or step-downs, 3 sec down / 3 sec up, 3 × 8. Isometrics settle a tendon; heavy slow reps are what rebuild it."]},
+
+    /* Parked by the bursitis (Aug 2026). `paused` keeps them off the run and
+       out of the totals; delete the flag when Carolyn clears them. */
+    {variant:0, paused:true, name:"Knee-to-wall test", badge:"opt", mode:"reps", target:"measure LEFT", est:40,
+     dose:"PAUSED — bursitis (Aug 2026). Skip.",
+     detail:"Toe near wall, drive knee forward to touch, heel flat. Brief contact — measure, don't stretch. Note whether the stop is a painless BONY block or a painful/stiff tendon limit.",
+     cue:"PAUSED for the bursitis: this test drives the left ankle to end-range loaded dorsiflexion — exactly the position that compresses the bursa — so the measurement itself is a provocation right now. It returns, same baseline and traffic lights, when the sports-med visit clears it. (Old rule for reference: track LEFT vs your quiet-day ~5.5\", not the R–L gap. Green: ≥5.0\" + painless bony end-feel · Yellow: 3.5–5.0\" or pain at end range · Red: <3.5\" or sharp pain.)"},
+
+    {variant:1, paused:true, name:"Mini-pogos", badge:"new",
+     mode:"time", sec:20, sets:2,
+     dose:"PAUSED — bursitis (Aug 2026). Skip.",
+     cue:"PAUSED until the sports-med visit — no plyometrics of any kind while the bursa is angry; the strength program's jumps are pulled for the same reason. Remove the pause and resume at your old level when running is cleared. Old rule: SKIP THIS THE DAY YOU PLAY AND THE DAY AFTER — the match already was your spring session, and these want 48 hours between. The block exists to fill the four or five days you don't play, so a match is never the only spring loading you get. Heel loud on landing → stay at this level. Heel lifts in.",
+     levels:["Both feet, small and low. Short ground contact, action at the ankle, knees nearly straight.",
+             "Both feet, then add 10 sec per side single-leg after each set.",
+             "Both feet, 15 sec per side single-leg, then a few low forward bounds."]}
+  ]
+},
+{
+  id:"pregym", name:"Pre-gym — lift prep", short:"Pre-gym", accent:"#8FBFA6", sched:{freq:"gym"},
+  sub:"The three moves before a lift, on the days the calendar has one — it follows the session if you drag the session. General prep, injury prevention, nothing more. Do it last, so it leads straight into the bar: on Today, drag it onto whatever you're doing first.",
+  blocks:[
+    {name:"Squat-to-stand", mode:"reps", target:"6 reps", est:45,
+     dose:"6 slow reps",
+     detail:"Feet shoulder-width. Hinge down and take hold of your toes with the legs near-straight, then pull the hips down into a deep squat — chest up, knees pushed out by the elbows. Pause a breath, lift the hips back up to the hamstring stretch, and stand tall.",
+     cue:"Ankles, hips and T-spine in one move. Bursitis (Aug 2026): the bottom of the squat is deep dorsiflexion, the bursa's compression zone — do these in shoes with the heel lifts in, and stop the descent where the back of the left heel stays quiet."},
+    {name:"World's greatest stretch", mode:"time", sec:80,
+     dose:"80 sec · alternating sides",
+     detail:"Step into a long lunge, both hands to the floor inside the front foot. Sink the hips for a breath, then rotate the inside arm up toward the ceiling, eyes following the hand. Step back, swap legs, keep alternating.",
+     cue:"Hips, groin and upper-back rotation in one package — the closest thing to a general warm-up for everything the bar will ask."},
+    {name:"Scapular wall slides", mode:"reps", target:"8 reps", est:40,
+     dose:"8 slow reps",
+     detail:"Back against a wall, arms in a goalpost, forearms and backs of the wrists as close to the wall as they'll go. Slide the arms up overhead and back down without the low back arching away from the wall.",
+     cue:"Primes the shoulders and upper back for pressing, rowing and pull-ups without loading anything. If the wrists can't reach the wall, work where you are — that range is part of what this trains."}
   ]
 },
 {

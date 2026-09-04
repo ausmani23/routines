@@ -6,7 +6,7 @@
    never edited in a sibling.
 
    dbKey and the CACHE name in sw.js must differ from every sibling: all the
-   apps are served from ausmani23.github.io, and localStorage is per-origin,
+   apps are served from adanerusmani.com, and localStorage is per-origin,
    so a shared key would merge two people's logs. */
 const APP = {
   name: "Routines",
@@ -21,6 +21,9 @@ const APP = {
     mobility: { label:"Mobility & PT", cap:"daily, non-negotiable" },
     cardio:   { label:"Cardio",        cap:"running and cutting" }
   },
-  history: true,                             // show the Hevy-CSV import; history.js carries the baked past
+  history: true,
+  /* No 5/10/15-min chips on the detail screen: the daily work is filed in
+     buckets (hips, core, mobility, PT, pre-gym) and stacked on Today instead. */
+  budgets: false,                             // show the Hevy-CSV import; history.js carries the baked past
   textScale: 1                               // body zoom — 1.15 on the larger-type apps
 };

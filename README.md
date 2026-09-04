@@ -4,7 +4,7 @@ A personal exercise-routine timer, installable as a PWA on phone / iPad / deskto
 Pick a routine, hit start, and it runs the whole circuit hands-free: a countdown
 dial, spoken exercise names, transition beeps, and auto-advance between moves.
 
-Live at: **https://ausmani23.github.io/routines/**
+Live at: **https://adanerusmani.com/routines/**
 
 - To install on iPhone/iPad: open the URL in Safari → Share → **Add to Home Screen**.
 - To install on desktop: open in Chrome/Edge → **Install** icon in the address bar.

@@ -6,8 +6,18 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 A personal exercise-routine timer PWA (plain HTML/CSS/JS, no framework, no build
 step, no dependencies), deployed to GitHub Pages at
-https://ausmani23.github.io/routines/. `PROJECT.md` is the full handoff document —
+https://adanerusmani.com/routines/. `PROJECT.md` is the full handoff document —
 read it for background and open decisions.
+
+**The address changed on 2 Sep 2026.** The owner's user site got the custom
+domain adanerusmani.com, and GitHub then 301-redirects every
+`ausmani23.github.io/<app>/` URL there. An app installed from the OLD address
+is frozen: its service worker can't update through a redirect, and its
+cache-first fetch handler discards the redirected (opaque) responses, so
+nothing pushed after that date reaches it — and its localStorage is on the old
+origin, unreachable from the new one. The only way out is a fresh install at
+the new address, with the data carried over by hand (Copy everything from the
+old app; the Notes screen's Copy/Restore backup for any future move).
 
 ## Commands
 
@@ -16,7 +26,7 @@ There is no build, lint, or test step. Development is: edit files, open
 
 - **Deploy**: `git push` — GitHub Pages serves the repo root from `main`.
 - **This repo is the canonical shell for four apps** (routines, tara, abba,
-  amma — all on ausmani23.github.io). `app.js lift.js schedule.js drag.js
+  amma — all on adanerusmani.com). `app.js lift.js schedule.js drag.js
   styles.css index.html sw.js manifest.json` are byte-identical across them
   apart from the title/manifest/CACHE lines; everything per-person lives in
   each app's `config.js` (name, `dbKey`, export copy, area labels, `history`,
@@ -71,8 +81,10 @@ re-enumerate the days, or the two will drift on the first re-program. Recurring
 work instead carries `sched:{freq:"daily"|"onDemand"}`: that is every routine in
 `routines.js` plus the morning check-in. A routine may also carry
 `sched:{freq:"weekly", days:[1,3,5]}` (0 = Sunday) and be due on those weekdays
-only — `routinesOn(k)` in schedule.js; the parents' apps use it, this one
-doesn't.
+only, or `sched:{freq:"gym"}` and be due on the days the calendar has a
+strength session (the pre-lift prep follows a dragged session) —
+`routinesOn(k)` in schedule.js. Weekly and gym-day routines are cards on
+Upcoming (they are what varies); dailies stay on the one-line summary.
 
 `sid` is stable within a block and is what a drag override and a logged session
 are keyed to, so the same workout on two different days ticks off independently.
@@ -174,21 +186,46 @@ When adding content, check the totals — `claude_workspace/` has the
 duration-check harness. A block may declare `rest` (seconds between its sets,
 a real "Breathe" countdown, counted in the total).
 
+### Buckets and stacks — the daily work in pieces, or as one run
+
+The non-gym work is filed in **buckets**, one routine card each: hips (the
+morning opener), core, mobility A/B, PT A/B, and the pre-gym prep on lift
+days. They are deliberately small. When there is time for more than one, a
+card is dragged by its grip onto another on Today and the two become a
+**stack** — one card, one run straight through, logged as each member.
+`db.stacks[YYYY-MM-DD] = [[id, …], …]` is a grouping for the day and nothing
+else (`stacksOn`/`stackOnto`/`unstack`; a member that stops being due drops
+out; a week is kept). A run is therefore always a **list of parts**:
+`buildSeq` lays out `state.run = [{r, v, bis}]`, every step carries `rid` and
+`bi`, and `finish`/`quitRoutine` record progress per part and log each
+routine whose required blocks are all behind you (`partClosed`, not
+`partToday()===null`, which is also true when nothing was done). A single
+routine is a list of one; `state.stack` is null for it. The stack's detail
+screen (`renderStackDetail`) numbers the members' steps straight through and
+gives each its own variant picker. Stacking is Today-only and shares one
+Pointer-Events gesture with the Upcoming drag (`drag.js`, `DRAG_MOVE` /
+`DRAG_STACK`).
+
 ### Batches — "give me 10 minutes"
 
-A routine can be done in pieces across the day. The detail screen offers
-5/10/15/All chips; `pickBatch()` takes the remaining blocks in order while the
-running total is under budget (so a batch is never empty and ends just past
-the mark — the Start button shows the real length). A finished batch records
-its blocks in `db.part[routineId][YYYY-MM-DD] = {v, done:[…]}` — **indices into
-`r.blocks`**, because names repeat within a routine. A record is *open* only
-while a required block is still undone; once every required block is done the
-day is logged in `db.log` as a single run would be, and the record reads as
-absent (`partRecord` returns null) — so "Run again" is the whole routine,
-optional tails never re-log a day, and Upcoming's totals for a finished routine
-don't change. While a record is open: the card shows "N min left", the variant
-is locked (`defaultVariant`), and **End routine** (`quitRoutine`, no `data-go`)
+The time-budget chips (5/10/15/All, `pickBatch`) are **off in this app**
+(`budgets:false` in config.js — he stacks whole buckets instead) and on in
+the siblings. The machinery underneath stays on everywhere: a finished batch
+or an early **End routine** records its blocks in
+`db.part[routineId][YYYY-MM-DD] = {v, done:[…]}` — **indices into `r.blocks`**,
+because names repeat within a routine. A record is *open* only while a
+required block is still undone; once every required block is done the day is
+logged in `db.log` as a single run would be, and the record reads as absent
+(`partRecord` returns null) — so "Run again" is the whole routine, optional
+tails never re-log a day, and Upcoming's totals for a finished routine don't
+change. While a record is open: the card shows "N min left", the variant is
+locked (`defaultVariant`), and **End routine** (`quitRoutine`, no `data-go`)
 keeps the blocks already passed. Records older than a week are dropped on load.
+
+A block may carry `paused:true` — an item Carolyn has parked (the mini-pogos,
+the knee-to-wall test). `activeBlocks` never returns it, so it neither runs
+nor counts; the detail screen lists it dimmed under "Paused" so the card
+keeps its text. Delete the flag to resume.
 
 ### Notes and the weekly export
 
@@ -197,7 +234,11 @@ logs live in `localStorage` and leave the device only through **Notes & export �
 Copy everything / Download .md**, which emits one markdown document (notes,
 strength sessions, routine completions — last 28 days). That export is the input
 to the Sunday re-program. Don't add a "sync" feature to close this gap without
-asking; the manual hand-off is the design, not an omission.
+asking; the manual hand-off is the design, not an omission. The Notes screen
+also has **Copy backup / Restore a backup**: the whole `db` as one JSON blob,
+for moving to a new phone or a new address. Restore *merges* (`mergeDB`: what
+is on the device wins, the backup fills gaps, nothing is deleted) and refuses
+a backup from a sibling app (`app` = `dbKey`).
 
 - `index.html` — nine `<section class="screen">` blocks toggled by an `.on`
   class; no router.
